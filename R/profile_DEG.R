@@ -1,0 +1,437 @@
+
+#' @title bin_filter_profile_mass
+#'
+#' @description Filter Cells by Profile Mass within Pseudotime Bins
+#' @details
+#'
+#' Applies a binning strategy over pseudotime and retains only bins where both target and control profile mass
+#' exceed a given threshold. Useful for identifying regions of sufficient information for differential analysis.
+#'
+#' @param mass A numeric matrix or data frame with two columns: one for the target profile mass and one for the control mass.
+#' @param time A numeric vector of pseudotime values (must match number of rows in `mass`).
+#' @param thresh Minimum total mass required in both target and control groups for a bin to be retained (default: 5).
+#' @param binsize Width of pseudotime bins used in `cut()` (default: 0.005).
+#'
+#' @return A logical vector indicating which rows (cells) fall into retained pseudotime bins.
+#'
+#' @importFrom dplyr mutate group_by summarise filter
+#' @examples
+#' set.seed(1)
+#' mass <- cbind(target = runif(100), control = runif(100))
+#' time <- sort(runif(100))
+#' valid_cells <- bin_filter_profile_mass(mass, time, thresh = 3)
+#' sum(valid_cells)
+#'
+#' @export
+bin_filter_profile_mass = function(mass,time,thresh = 5, binsize = 0.005){
+  if(ncol(mass) != 2){
+    stop("The mass should only have two columns, one for target group, one for the control")
+  }
+  if(nrow(mass) != length(time)){
+    stop("The number of points doesn't match between the mass and time")
+  }
+  df = as.data.frame(cbind(mass,time))
+  colnames(df) = c("target","control","time")
+  df = df %>% mutate(bin = cut(time, breaks = seq(min(df$time), max(df$time),
+                                                  by = binsize)), include.lowest = TRUE)
+  df_summary = df %>% group_by(bin) %>% summarise(target = sum(target),control = sum(control)) %>% filter(target > thresh,control > thresh)
+  # return(df_summary)
+  flag = df$bin %in% df_summary$bin
+  return(flag)
+}
+
+
+#' @title ridge_regression
+#'
+#' @description Ridge Regression for Gene Expression Modeling
+#' @details
+#'
+#' Performs ridge regression using a closed-form solution. Can be applied to model either a single gene (vector response)
+#' or multiple genes (matrix response) using a shared regularization penalty.
+#'
+#' @param X A numeric matrix of predictors (cells × features).
+#' @param G A numeric response matrix or vector. Must match number of rows in `X` (cells × genes or 1).
+#' @param lambda Non-negative regularization strength for ridge penalty (default: 1e-4).
+#'
+#' @return A list with components:\n
+#' \item{coef}{Estimated coefficient matrix (features × genes)}\n
+#' \item{rss}{Residual sum of squares per gene}
+#'
+#' @examples
+#' set.seed(1)
+#' X <- matrix(rnorm(200), nrow = 50)
+#' G <- matrix(rnorm(150), nrow = 50)
+#' fit <- ridge_regression(X, G)
+#' str(fit)
+ridge_regression = function(X,G,lambda = 1e-4){
+  # X: design matrix: cell by dimension
+  # G: cell by gene matrix or a gene expression vector
+  # Ridge regression: beta = (XᵀX + λI)⁻¹ Xᵀy
+  d = ncol(X)
+  XtX <- crossprod(X) + lambda * diag(d)
+  XtY <- crossprod(X, G)
+  beta <- solve(XtX, XtY)
+  G_hat <- X %*% beta
+  RSS <- colSums((G - G_hat)^2)
+
+  return(list(coef = beta,rss = RSS))
+}
+
+#' @title soft_cluster_gam_fit
+#'
+#' @description Fit Soft Cluster-Specific GAMs with Ridge Regularization
+#' @details
+#'
+#' Fits a generalized additive model (GAM) to gene expression along pseudotime using soft cluster assignments.
+#' The model compares a shared smooth (null model) to cluster-specific smooths (full model), using ridge regression and F or likelihood ratio tests.
+#'
+#' @param G A matrix of gene expression values (genes × cells).
+#' @param t A numeric vector of pseudotime values (length = number of cells).
+#' @param P A soft cluster assignment matrix (cells × clusters), where rows sum to 1.
+#' @param df Degrees of freedom for spline basis (default: 5).
+#' @param lambda Ridge regularization strength (default: 1e-4).
+#' @param test Statistical test to use for model comparison: `"F"` (default) or `"LRT"` (likelihood ratio test).
+#'
+#' @return A list with components:\n
+#' \item{stat}{A data frame with test statistic, p-value, mean expression difference, and Cohen's d for each gene}\n
+#' \item{df}{Degrees of freedom used for test}\n
+#' \item{coef}{Fitted coefficients from the full model}\n
+#' \item{design_null}{Design matrix for the null model}\n
+#' \item{design_full}{Design matrix for the full model}
+#'
+#' @importFrom splines ns
+#' @importFrom dplyr mutate
+#' @examples
+#' # Example pseudotime, profiles, and expression matrix setup
+#' set.seed(123)
+#' t <- seq(0, 1, length.out = 100)
+#' P <- matrix(runif(300), nrow = 100)
+#' P <- P / rowSums(P)
+#' G <- matrix(rnorm(500), nrow = 5)
+#' fit <- soft_cluster_gam_fit(G, t, P, df = 3)
+#' head(fit$stat)
+#'
+#' @export
+soft_cluster_gam_fit <- function(G, t, P, df = 5, lambda = 1e-4,test = "F") {
+  # G: gene by cell matrix
+  # t: pseudotime (vector of length n)
+  # P: n x m matrix of soft cluster assignment (rows sum to 1)
+  # df: degrees of freedom for spline
+  # lambda: ridge penalty
+
+  n <- ncol(G)
+  m <- ncol(P)
+  B <- cbind(1,ns(t, df = df))  # n x d spline basis
+  d <- ncol(B)
+
+  # Full model design matrix: n x (m * d)
+  #   X_full <- matrix(0, nrow = n, ncol = m * d)
+  #   for (k in 1:m) {
+  #     X_full[, ((k - 1) * d + 1):(k * d)] <- B * P[, k]
+  #   }
+  X_full <- model.matrix(~ 0 + B:P)
+
+  # Null model: shared smooth
+  X_null <- B
+
+  # Ridge regression: beta = (XᵀX + λI)⁻¹ Xᵀy
+  null = ridge_regression(X_null,t(G),lambda = lambda)
+
+  full = ridge_regression(X_full,t(G),lambda = lambda)
+
+  # Degrees of freedom
+  df_null <- d
+  df_full <- m * d
+  df1 <- df_full - df_null
+  df2 <- n - df_full
+
+  test = match.arg(test,c("F","LRT"))
+  if (test == "F") {
+    F_stat <- ((null$rss - full$rss) / df1) / (full$rss / df2)
+    pval <- pf(F_stat, df1, df2, lower.tail = FALSE)
+    stat <- F_stat
+  } else if (test == "LRT") {
+    # Gaussian likelihood: log L = -0.5 * n * log(RSS)
+    logLik_null <- -0.5 * n * log(null$rss)
+    logLik_full <- -0.5 * n * log(full$rss)
+
+    LRT_stat <- 2 * (logLik_full - logLik_null)  # vectorized
+    pval <- pchisq(LRT_stat, df = df1, lower.tail = FALSE)
+    stat <- LRT_stat
+  }
+
+  target_predict = X_null %*% full$coef[1:(df+1),]
+  control_predict = X_null %*% full$coef[(df+2):(2*df+2),]
+
+  sigma = sqrt(null$rss/nrow(X_null))
+
+  mean_diff = target_predict-control_predict
+  mean_diff = colMeans(mean_diff,na.rm = TRUE)
+  cohen = mean_diff/sigma
+
+  stat_metric = as.data.frame(cbind(stat,pval))
+  colnames(stat_metric) = c("stat","pval")
+  stat_metric = stat_metric %>% mutate(mean_diff = mean_diff,cohen = cohen)
+
+  return(list(
+    stat = stat_metric,
+    df = c(df1,df2),
+    coef = full$coef,
+    design_null = X_null,
+    design_full = X_full
+  ))
+}
+
+#' @title soft_cluster_gam_fit
+#'
+#' @description Aggregate Profile Probabilities by Cluster
+#' @details
+#'
+#' Computes the total probability mass for each profile across a set of clusters.
+#' Typically used to summarize soft profile assignments (e.g., from Clonotrace) across transcriptional clusters.
+#'
+#' @param cell_profile_prob A numeric matrix of profile probabilities (cells × profiles).
+#' @param cluster_label A vector of cluster identities (length must match number of rows in `cell_profile_prob`).
+#'
+#' @return A numeric matrix where rows represent clusters and columns represent profile sums.
+#'
+#' @importFrom dplyr group_by summarise across
+#' @examples
+#' set.seed(1)
+#' prob <- matrix(runif(500), nrow = 100, ncol = 5)
+#' prob <- prob / rowSums(prob)
+#' cluster <- sample(letters[1:4], 100, replace = TRUE)
+#' profile_mass <- cluster_profile_mass(prob, cluster)
+#' print(profile_mass)
+#'
+cluster_profile_mass <- function(cell_profile_prob, cluster_label) {
+  # Convert input to a dataframe if it isn't already
+  out = as.data.frame(as.matrix(cell_profile_prob))
+
+  # Add cluster labels as a column and group by them
+  out$cluster <- cluster_label
+
+  # Sum probabilities per cluster (using dplyr)
+  out_aggregated <- out %>%
+    group_by(cluster) %>%
+    summarise(across(everything(), sum), .groups = 'drop')
+
+  # Set rownames and remove the cluster column
+  result <- as.data.frame(out_aggregated)
+  rownames(result) <- result$cluster
+  result <- result[, -1, drop = FALSE]  # Ensure result remains a dataframe if single column
+
+  return(as.matrix(result))
+}
+
+#' @title cluster_profile_enrich
+#'
+#' @description Permutation-Based Enrichment Test of Profiles Within Clusters
+#' @details
+#'
+#' Tests whether specific profiles are statistically enriched in transcriptional clusters using permutation testing.
+#' Compares the observed profile mass per cluster to a null distribution generated by random label permutations.
+#'
+#' @param cell_profile_prob A matrix of profile probabilities (cells × profiles).
+#' @param cluster_label A vector of cluster identities (length = number of rows in `cell_profile_prob`).
+#' @param permute_n Integer. Number of permutations to perform (default: 300).
+#'
+#' @return A list with two elements:\n
+#' \item{prob}{Observed profile mass per cluster (same format as `cluster_profile_mass()`)}\n
+#' \item{pval}{Matrix of empirical p-values (1-sided) indicating profile enrichment}
+#'
+#' @importFrom abind abind
+#' @examples
+#' set.seed(42)
+#' profile_probs <- matrix(runif(200), nrow = 50, ncol = 4)
+#' profile_probs <- profile_probs / rowSums(profile_probs)
+#' clusters <- sample(1:5, 50, replace = TRUE)
+#' result <- cluster_profile_enrich(profile_probs, clusters, permute_n = 100)
+#' head(result$pval)
+#'
+#' @export
+cluster_profile_enrich = function(cell_profile_prob,cluster_label,permute_n = 300){
+  truth = cluster_profile_mass(cell_profile_prob,cluster_label)
+
+  permute = lapply(1:permute_n,function(i){
+    permute_label = sample(cluster_label,size = length(cluster_label),replace = FALSE)
+    permute_i = cluster_profile_mass(cell_profile_prob,permute_label)
+    return(permute_i)
+  })
+  permute = abind::abind(permute, along = 3)
+
+  test = lapply(1:nrow(truth),function(i){
+    sub = sapply(1:ncol(truth),function(j){
+      p = sum(truth[i,j] > permute[i,j,])/length(permute[i,j,])
+    })
+    return(sub)
+  })
+  test = do.call(rbind,test)
+
+  rownames(test) = rownames(truth)
+  colnames(test) = colnames(truth)
+
+  return(list(prob = truth,
+              pval = 1 - test))
+}
+
+#' @title profile_cluster_DEG_permute
+#'
+#' @description Permutation Null Distribution for Profile-Based Differential Expression
+#' @details
+#'
+#' Computes a null distribution of p-values for profile-based differential gene expression
+#' by repeatedly permuting the soft profile assignment matrix. This supports empirical
+#' calibration of DE gene significance in pseudotime analysis.
+#'
+#' @param P A matrix of soft profile assignments for each cell (cells × 2, typically: target vs. control).
+#' @param G A gene expression matrix (genes × cells).
+#' @param dpt A numeric pseudotime vector (length = number of columns in `G`).
+#' @param n Integer. Number of permutations (default: 50).
+#'
+#' @return A list of p-value vectors (one per permutation) representing the null distribution.
+#'
+#' @examples
+#' # Simulated example
+#' G <- matrix(rnorm(5000), nrow = 100)
+#' P <- matrix(runif(200), nrow = 100)
+#' P <- cbind(target = P[, 1], control = 1 - P[, 1])
+#' dpt <- seq(0, 1, length.out = 100)
+#' null_pvals <- profile_cluster_DEG_permute(P, G, dpt, n = 10)
+#' length(null_pvals)
+#'
+profile_cluster_DEG_permute = function(P, G, dpt, n = 50){
+  null_p = lapply(1:n,function(i){
+    P_permute = P[sample(1:nrow(P),size = nrow(P),replace = FALSE),]
+    P_permute = t(apply(P_permute,1,function(x) x = sample(x,size = length(x),replace = FALSE)))
+    # P_permute = MCMCpack::rdirichlet(nrow(P), rep(1, ncol(P)))
+
+    df = 1
+    null = soft_cluster_gam_fit(G,dpt,as.matrix(P_permute),df = df,lambda = 1e-4)
+    null_test = null$stat
+
+    return(null_test$pval)
+  })
+  return(null_p)
+}
+
+
+#' @title profile_cluster_DEG
+#'
+#' @description Differential Expression Between Profile and Background in a Single Cluster
+#' @details
+#'
+#' Performs pseudotime-aware differential expression testing between a target profile and control background
+#' within a specific transcriptional cluster. Combines soft cluster-weighted regression with permutation-derived
+#' null distributions to assess gene-level significance.
+#'
+#' @param profile Character or numeric vector indicating which profiles to test.
+#' @param cluster Character or factor. Name or ID of the cluster to analyze.
+#' @param exprs A gene expression matrix (genes × cells).
+#' @param cell_meta A data frame of cell-level metadata (must include pseudotime and cluster labels).
+#' @param cell_profile_prob A numeric matrix of profile probabilities (cells × profiles).
+#' @param cluster_col Name of the column in `cell_meta` for cluster labels (default: `"cluster"`).
+#' @param pseudotime_col Name of the column in `cell_meta` representing pseudotime (default: `"cell_t"`).
+#' @param permute_n Integer. Number of permutations for null model generation (default: 50).
+#'
+#' @return A list containing:\n
+#' \item{stat}{Data frame with statistics, empirical p-values, and FDR-adjusted p-values}\n
+#' \item{cell}{Character vector of cell IDs used in the test}\n
+#' \item{design_null, design_full, coef, df}{Model components from GAM fitting}
+#'
+#' @importFrom dplyr filter_at mutate
+#' @importFrom stats p.adjust
+#' @examples
+#' # Assuming cell_meta, exprs, and cell_profile_prob are defined
+#' res <- profile_cluster_DEG("P1", cluster = "C2", exprs, cell_meta, cell_profile_prob)
+#' head(res$stat)
+#'
+#' @export
+profile_cluster_DEG = function(profile,cluster,exprs,cell_meta,cell_profile_prob,
+                               cluster_col = "cluster",pseudotime_col = "cell_t",permute_n = 50){
+  cell_meta = as.data.frame(cell_meta)
+  sub_meta = cell_meta[rownames(cell_profile_prob),] %>% filter_at(cluster_col,~. == cluster)
+
+  P = cell_profile_prob[rownames(sub_meta),]
+  target = rowSums(P[,profile,drop = FALSE])
+  control = rowSums(P) - target
+  P = cbind(target,control)
+  flag = bin_filter_profile_mass(mass = P,time = sub_meta[,pseudotime_col],thresh = 3,binsize = 0.005)
+
+  if(sum(flag) < 5){
+    return(NULL)
+  }
+
+  sub_meta = sub_meta[flag,]
+  P = P[flag,]
+
+  G = exprs[,rownames(sub_meta)]
+  G = G[rowSums(G != 0) > 30, ]
+  G = as.matrix(G)
+
+  p_null = unlist(profile_cluster_DEG_permute(P = as.matrix(P),G = G,dpt = sub_meta[,pseudotime_col],n = permute_n))
+
+  DEG_test = soft_cluster_gam_fit(G,sub_meta[,pseudotime_col],as.matrix(P),df = 1,lambda = 1e-4)
+  DEG_test$stat$pcali = sapply(DEG_test$stat$pval, function(p) mean(p_null <= p))
+
+  DEG_test$stat = DEG_test$stat %>% mutate(
+    # Adjust empirical p-values for FDR
+    padj = p.adjust(pcali, method = "fdr")
+  )
+
+  DEG_test$cell = rownames(sub_meta)
+
+  return(DEG_test)
+}
+
+#' @title profile_multiclusters_DEG
+#'
+#' @description Profile-Specific Differential Expression Across Multiple Clusters
+#' @details
+#'
+#' Applies `profile_cluster_DEG()` to a set of clusters to identify genes associated with a specific profile
+#' across the transcriptional landscape. Skips clusters where the profile mass is below a threshold.
+#'
+#' @param profile Character. Profile name or index to test.
+#' @param exprs A gene expression matrix (genes × cells).
+#' @param cell_meta A data frame of cell-level metadata (includes pseudotime and cluster labels).
+#' @param cell_profile_prob Matrix of soft profile probabilities (cells × profiles).
+#' @param clusters Optional. A vector of cluster names to test. If `NULL`, all clusters are used.
+#' @param cluster_col Name of the cluster label column in `cell_meta` (default: `"cluster"`).
+#' @param pseudotime_col Name of the pseudotime column in `cell_meta` (default: `"cell_t"`).
+#' @param mass_thresh Minimum profile mass in a cluster required to perform DE test (default: 100).
+#'
+#' @return A named list of DE test results, one for each qualifying cluster.
+#'
+#' @importFrom future.apply future_lapply
+#' @examples
+#' res_list <- profile_multiclusters_DEG("P1", exprs, cell_meta, cell_profile_prob)
+#' names(res_list)
+#'
+#' @export
+profile_multiclusters_DEG = function(profile,exprs,cell_meta,cell_profile_prob,clusters = NULL,
+                                     cluster_col = "cluster",pseudotime_col = "cell_t",mass_thresh = 100){
+  profile = as.character(profile)
+  mass = cluster_profile_mass(cell_profile_prob[,profile,drop = FALSE],
+                              cell_meta[rownames(cell_profile_prob),cluster_col])
+
+  if(is.null(clusters)){
+    clusters = rownames(mass)
+  }
+  clusters = as.character(clusters)
+
+  DEG = future_lapply(clusters,function(i){
+    if(sum(mass[i,profile]) > mass_thresh){
+      sub_DEG = profile_cluster_DEG(profile,cluster = i,exprs,cell_meta,cell_profile_prob,cluster_col,pseudotime_col)
+    }
+    else{
+      sub_DEG = NULL
+    }
+    return(sub_DEG)
+  },future.seed = TRUE)
+  names(DEG) = clusters
+
+  DEG = Filter(Negate(is.null), DEG)
+
+  return(DEG)
+}
