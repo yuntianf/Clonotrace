@@ -1125,3 +1125,22 @@ mat_sparsify = function(mat,row_mass = 0.9,col_mass = 0.9){
   mat = apply(mat,2,function(x) mass_filter(x,thresh = col_mass))
   return(mat)
 }
+
+#' @title top_k
+#'
+#' @description Extract Top-k Elements from a Numeric Vector
+#' @details
+#'
+#' Returns the top `k` elements from a numeric vector, sorted in ascending or descending order.
+#'
+#' @param v A numeric vector.
+#' @param k Integer. Number of top elements to return.
+#' @param decreasing Logical. If `TRUE`, returns the `k` largest values (default: `FALSE` = smallest).
+#'
+#' @return A numeric vector of length `k` containing the top `k` values.
+#'
+#' @examples
+top_k = function(v,k,decreasing = FALSE){
+  v = sort(v,decreasing = decreasing)
+  return(v[1:k])
+}

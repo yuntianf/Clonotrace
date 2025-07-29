@@ -1,26 +1,26 @@
 {
-    "id": "28E869D5",
-    "path": "C:/yuntian/Necessary/Upenn/Thesis/project/Jackson_GBM/method/github/Clonotrace/R/auxiliary.R",
-    "project_path": null,
+    "id": "FC5CB409",
+    "path": "C:/yuntian/Necessary/Upenn/Thesis/project/Jackson_GBM/method/github/temp/Clonotrace/R/auxiliary.R",
+    "project_path": "R/auxiliary.R",
     "type": "r_source",
     "hash": "0",
     "contents": "",
     "dirty": false,
-    "created": 1753760119635.0,
+    "created": 1753797935753.0,
     "source_on_save": false,
     "relative_order": 3,
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "1131,11",
-        "scrollLine": "1100"
+        "cursorPosition": "1146,0",
+        "scrollLine": "1111"
     },
     "folds": "",
-    "lastKnownWriteTime": 1753760180,
+    "lastKnownWriteTime": 1753797941,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1753760180905,
+    "last_content_update": 1753797941697,
     "read_only": false,
     "read_only_alternatives": []
 }
