@@ -15,7 +15,7 @@
 #' @param ... Additional arguments passed to `graph_clone_ot()` or `graph_clone_nn()`.
 #'
 #' @return A data frame with columns `group1`, `group2`, and `dis`, representing pairwise clone distances.
-#' @importFrom  LTLA/bluster makeSNNGraph
+#' @importFrom  bluster makeSNNGraph
 #' @importFrom igraph edge_attr
 #' @export
 clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,

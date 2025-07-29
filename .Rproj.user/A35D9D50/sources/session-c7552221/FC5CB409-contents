@@ -258,7 +258,7 @@ link2cluster = function(link,nodes){
 #'
 #' @return A data frame with columns `i` and `j`, representing mutual nearest neighbor pairs with `i < j`.
 #'
-#' @importFrom RANN kNN
+#' @importFrom dbscan kNN
 #' @importFrom dplyr inner_join filter
 #' @examples
 #' dist_mat <- dist(matrix(rnorm(100), ncol = 5))
@@ -293,7 +293,7 @@ mnn_dist = function(dis,k){
 #'
 #' @return A data frame with columns `i`, `j`, and `dis`, listing the top nearest neighbor pairs and their distances.
 #'
-#' @importFrom RANN kNN
+#' @importFrom dbscan kNN
 #' @importFrom dplyr arrange
 #' @examples
 #' dist_mat <- dist(matrix(rnorm(100), ncol = 5))
@@ -1138,8 +1138,6 @@ mat_sparsify = function(mat,row_mass = 0.9,col_mass = 0.9){
 #' @param decreasing Logical. If `TRUE`, returns the `k` largest values (default: `FALSE` = smallest).
 #'
 #' @return A numeric vector of length `k` containing the top `k` values.
-#'
-#' @examples
 top_k = function(v,k,decreasing = FALSE){
   v = sort(v,decreasing = decreasing)
   return(v[1:k])

@@ -1,0 +1,27 @@
+Package: Clonotrace
+Type: Package
+Title: Deciphering T Cell Fate and Clonal Dynamics via Integrative Single-Cell Lineage Modeling
+Version: 1.0.0
+Author: Yuntian Fu
+Maintainer: Yuntian Fu <yuntianf@pennmedicine.upenn.edu>
+Description: Clonotrace is a tool for multimodal analysis of single-cell RNA-seq data with lineage information, including lineage-barcoded cells and immune cells.
+License: MIT
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+LazyData: true
+RoxygenNote: 7.2.1
+Remotes: LTLA/bluster
+Imports: Matrix, RANN, RSpectra, abind, dbscan, dplyr, future, future.apply, tidyr, transport, ggplot2, ggrastr, ggrepel, igraph, scatterpie, splines, stats, uwot, reticulate
+Suggests:
+    knitr,
+    rmarkdown
+Collate: 
+    'auxiliary.R'
+    'clone_dis.R'
+    'cluster.R'
+    'coembed.R'
+    'label_propagation.R'
+    'profile_DEG.R'
+    'pseudotime.R'
+    'visualization.R'
+VignetteBuilder: knitr
