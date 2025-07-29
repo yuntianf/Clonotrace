@@ -14,7 +14,7 @@ The easiest way to get Clonotrace is to install it from Github:
 devtools::install_github("yuntianf/Clonotrace",dependencies=TRUE)
 ```
 
-If you want to visualize the clone-weighted cell embedding, you also need to install several python packages in the `requirements.txt` , which can be done by:
+If you want to visualize the clone-weighted cell embedding, you also need to install several python packages in the `requirements.txt` (https://github.com/yuntianf/Clonotrace/blob/main/requirements.txt), which can be done by:
 ```
 pip install -r requirements.txt
 ```
