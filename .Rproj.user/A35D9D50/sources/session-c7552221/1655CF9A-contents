@@ -161,7 +161,7 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
     target_clone = 1:ncol(cell_clone_prob)
   }
 
-  target_clone_ident = cell_clone_prob[,target_clone] > 0
+  target_clone_ident = cell_clone_prob[,target_clone,drop = FALSE] > 0
   flag = rep(0,ncol(target_clone_ident))
 
   pool = c()
@@ -169,7 +169,7 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
 
   full_ot = c()
 
-  target_id = (colSums(target_clone_ident) == max(target_clone_ident))[1]
+  target_id = which((colSums(target_clone_ident) == max(colSums(target_clone_ident))))[1]
   while(sum(flag) < length(target_clone)){
     flag[target_id] = 1
 
