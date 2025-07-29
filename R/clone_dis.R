@@ -19,7 +19,7 @@
 #' @importFrom igraph edge_attr
 #' @export
 clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
-                     overwrite = FALSE,exact = FALSE,...){
+                         overwrite = FALSE,exact = FALSE,...){
   cells = intersect(rownames(embedding),rownames(cell_clone_prob))
   if(length(cells) != length(rownames(embedding)) |
      length(cells) != length(rownames(cell_clone_prob))){
@@ -45,11 +45,16 @@ clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
     dis_result = readRDS(file.path(outpath,"groups_graph_dis.rds"))
   }
   else{
+    args <- list(...)
     if(exact == TRUE){
-      dis_result = graph_clone_ot(graph = cell_graph,cell_clone_prob,...)
+      ot_args <- c("cores", "cache")
+      call_args <- args[names(args) %in% ot_args]
+      dis_result <- do.call(graph_clone_ot, c(list(graph = cell_graph, cell_clone_prob = cell_clone_prob), call_args))
     }
     else{
-      dis_result = graph_clone_nn(graph = cell_graph,cell_clone_prob,...)
+      nn_args <- c("prob_thresh","k","verbose")
+      call_args <- args[names(args) %in% nn_args]
+      dis_result <- do.call(graph_clone_nn, c(list(graph = cell_graph, cell_clone_prob = cell_clone_prob), call_args))
     }
 
     saveRDS(dis_result,file.path(outpath,"clone_graph_dis.rds"))
@@ -293,7 +298,7 @@ clone_2_ot = function(distance,group1_mass,group2_mass){
 #' @importFrom igraph distances
 #'
 #' @export
-graph_clone_nn = function(graph,cell_clone_prob,prob_thresh = 0.1,nn_k = 2,verbose = FALSE){
+graph_clone_nn = function(graph,cell_clone_prob,prob_thresh = 0.1,k = 2,verbose = FALSE){
   cell_group_mat = cell_clone_prob
   cell_group_mat[cell_group_mat < prob_thresh] = 0
   cell_group_mat[cell_group_mat >= prob_thresh] = 1
