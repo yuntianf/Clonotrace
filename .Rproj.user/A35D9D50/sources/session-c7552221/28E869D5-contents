@@ -1,0 +1,1146 @@
+#' @title long2wide
+#' @description Convert Long Format Data Frame to Symmetric or Asymmetric Wide Matrix
+#' @details
+#' Converts a long-format data frame with row/column/value identifiers into a wide-format matrix-style data frame.
+#' Optionally enforces matrix symmetry by duplicating and merging reversed entries.
+#'
+#' @param long A data frame in long format with at least three columns: row ID, column ID, and value.
+#' @param row_names_from Name of the column in `long` to use as row names in the output.
+#' @param col_names_from Name of the column in `long` to use as column names in the output.
+#' @param values_from Name of the column in `long` to use as cell values in the output matrix.
+#' @param symmetric Logical. If `TRUE`, the output will be forced to be symmetric by duplicating reversed entries.
+#'
+#' @return A wide-format data frame or matrix where row names and column names are as specified, and cell values come from `values_from`.
+#'
+#' @importFrom tidyr pivot_wider
+#' @importFrom dplyr select any_of
+#' @importFrom magrittr %>%
+#' @examples
+#' long_df <- data.frame(from = c("A", "B"), to = c("B", "A"), value = c(1, 2))
+#' mat <- long2wide(long_df, row_names_from = "from", col_names_from = "to", values_from = "value")
+#' print(mat)
+#'
+#' @export
+long2wide = function(long,row_names_from,col_names_from,values_from,symmetric = FALSE){
+  long = long[,c(row_names_from,col_names_from,values_from)]
+  if(symmetric){
+    rlong = long[,c(col_names_from,row_names_from,values_from)]
+    colnames(rlong) = c(row_names_from,col_names_from,values_from)
+    long = rbind(long,rlong)
+    long = long[!duplicated(long),]
+  }
+  out = tidyr::pivot_wider(long,names_from = col_names_from,values_from = values_from)
+
+  out = as.data.frame(out)
+  rownames(out) = out[,row_names_from]
+  out = out %>% dplyr::select(-any_of(row_names_from))
+  if(symmetric){
+    out = out[rownames(out),rownames(out)]
+  }
+
+  return(out)
+}
+
+
+#' @title long_symmetry
+#' @description Enforce Symmetry in a Long-Format Pairwise Data Frame
+#' @details
+#'
+#' Ensures a symmetric representation of long-format data by adding reversed pairs and removing duplicates.
+#' Useful for converting pairwise relationships (e.g., distances or similarities) into symmetric forms.
+#'
+#' @param long A long-format data frame with at least two ID columns and one or more data columns.
+#' @param row_names_from Name of the column representing the source node or element.
+#' @param col_names_from Name of the column representing the target node or element.
+#'
+#' @return A symmetric long-format data frame with reversed entries added and sorted.
+#'
+#' @importFrom dplyr arrange_at
+#' @importFrom magrittr %>%
+#' @examples
+#' long_df <- data.frame(from = c("A", "B"), to = c("B", "C"), value = c(1, 2))
+#' sym_df <- long_symmetry(long_df, row_names_from = "from", col_names_from = "to")
+#' print(sym_df)
+#'
+#' @export
+long_symmetry = function(long,row_names_from, col_names_from){
+  long = as.data.frame(long)
+  side = setdiff(colnames(long),c(row_names_from, col_names_from))
+  long = long[, c(row_names_from, col_names_from,side)]
+
+  rlong = long[,c(col_names_from,row_names_from,side)]
+  colnames(rlong)[1:2] = c(row_names_from,col_names_from)
+  long = rbind(long,rlong)
+  long = long[!duplicated(long),]
+  long = long %>% arrange_at(c(row_names_from,col_names_from))
+
+  return(long)
+}
+
+
+#' @title long2square
+#'
+#' @description Convert Long Format Data Frame to a Square Matrix
+#' @details
+#' Converts a long-format data frame (pairwise relationships) into a square numeric matrix.
+#' Optionally enforces symmetry and fills missing values.
+#'
+#' @inheritParams long2wide
+#' @param na.fill Value to fill in for missing matrix entries (default: NA).
+#' @param nodes Optional. A character vector specifying the full set of row/column labels.
+#'
+#' @return A square numeric matrix with rows and columns defined by the node set.
+#'
+#' @importFrom tidyr pivot_wider
+#' @examples
+#' long_df <- data.frame(from = c("A", "B"), to = c("B", "A"), value = c(1, 2))
+#' square_mat <- long2square(long_df, row_names_from = "from", col_names_from = "to", values_from = "value")
+#' print(square_mat)
+#'
+#' @export
+long2square = function(long, row_names_from, col_names_from, values_from,
+                       symmetric = TRUE,na.fill = NA,nodes = NULL){
+  long = as.data.frame(long)
+  long = long[, c(row_names_from, col_names_from, values_from)]
+  if (symmetric) {
+    long = long_symmetry(long,row_names_from, col_names_from)
+  }
+  if(is.null(nodes)){
+    nodes = unique(unlist(long[,row_names_from],long[,col_names_from]))
+  }
+
+  mat = as.data.frame(tidyr::pivot_wider(long,
+                                         names_from = col_names_from,
+                                         values_from = values_from))
+  rownames(mat) = mat[, row_names_from]
+  mat = mat[,-which(colnames(mat)==row_names_from)]
+  # return(mat)
+  nodes = as.character(sort(nodes))
+  diff = as.character(setdiff(nodes,colnames(mat)))
+  if(length(diff) > 0){
+    mat[,diff] = NA
+  }
+
+  mat = mat[nodes,nodes]
+  rownames(mat) = colnames(mat) = nodes
+
+  mat[is.na(mat)] = na.fill
+  mat = as.matrix(mat)
+
+  return(mat)
+}
+
+#' @title long2sparse
+#'
+#' @description Convert Long-Format Data Frame to Sparse Matrix
+#' @details
+#'
+#' Converts a long-format data frame representing pairwise relationships into a sparse matrix
+#' (`dgCMatrix`), with optional symmetry enforcement and customizable row/column ordering.
+#'
+#' @inheritParams long2wide
+#' @param unique_rows Optional character or factor vector defining the full set and order of row names.
+#' @param unique_cols Optional character or factor vector defining the full set and order of column names.
+#' @param symmetric Logical. If `TRUE`, creates a symmetric matrix by adding reversed entries (default: FALSE).
+#'
+#' @return A sparse matrix of class `dgCMatrix` with row and column names.
+#'
+#' @importFrom Matrix sparseMatrix
+#' @examples
+#' long_df <- data.frame(from = c("A", "B"), to = c("B", "C"), value = c(1, 2))
+#' spmat <- long2sparse(long_df, "from", "to", "value")
+#' print(spmat)
+#'
+#' @export
+long2sparse = function(long, row_names_from, col_names_from, values_from,unique_rows = NULL,unique_cols = NULL,symmetric = FALSE){
+  long = as.data.frame(long[, c(row_names_from, col_names_from, values_from)])
+
+  if(symmetric){
+    long = long_symmetry(long,row_names_from, col_names_from)
+  }
+
+  if(is.null(unique_rows)){
+    unique_rows <- unique(long[,row_names_from])
+  }
+  if(is.null(unique_cols)){
+    unique_cols <- unique(long[,col_names_from])
+  }
+
+  row_index <- match(long[,row_names_from], unique_rows)
+  col_index <- match(long[,col_names_from], unique_cols)
+
+  dgCmat <- sparseMatrix(i = row_index, j = col_index, x = long[,values_from],dims = c(length(unique_rows),length(unique_cols)))
+  rownames(dgCmat) = unique_rows
+  colnames(dgCmat) = unique_cols
+  # dgCmat = dgCmat[order((unique_rows)),order((unique_cols))]
+  return(dgCmat)
+}
+
+#' @title wide2long
+#'
+#' @description Convert a Matrix to Long Format
+#' @details
+#'
+#' Converts a numeric matrix or data frame into a long-format data frame with integer-based `i`, `j`, and `value` columns.
+#'
+#' @param mat A numeric matrix or data frame.
+#'
+#' @return A data frame in long format with columns:
+#' \describe{
+#'   \item{i}{Row index}
+#'   \item{j}{Column index (as numeric)}
+#'   \item{value}{Matrix entry at (i, j)}
+#' }
+#'
+#' @importFrom tidyr pivot_longer
+#' @importFrom dplyr mutate
+#' @examples
+#' mat <- matrix(1:9, nrow = 3)
+#' long_df <- wide2long(mat)
+#' head(long_df)
+#'
+#' @export
+wide2long = function(mat){
+  colnames(mat) = 1:ncol(mat)
+  mat = as.data.frame(mat)
+  mat$i = 1:nrow(mat)
+
+  long = tidyr::pivot_longer(mat,cols = 1:(ncol(mat)-1),names_to = "j")
+  long = as.data.frame(long) %>% mutate(i = as.numeric(i),j = as.numeric(j))
+  return(long)
+}
+
+#' @title link2cluster
+#'
+#' @description Cluster Nodes Based on Link Connectivity
+#' @details
+#'
+#' Given a set of links between node pairs and a list of all nodes, this function constructs a symmetric adjacency matrix,
+#' applies diffusion to expand connectivity, and clusters the result using DBSCAN.
+#'
+#' @param link A data frame with two columns (i, j) indicating node pairs with links.
+#' @param nodes A character or factor vector of all node names to be clustered.
+#'
+#' @return A numeric vector of cluster labels for each node, as assigned by DBSCAN.
+#'
+#' @importFrom dbscan dbscan
+#' @importFrom dplyr arrange
+#' @examples
+#' link_df <- data.frame(i = c("A", "B", "C"), j = c("B", "C", "A"))
+#' clusters <- link2cluster(link_df, nodes = c("A", "B", "C"))
+#' print(clusters)
+#'
+link2cluster = function(link,nodes){
+  link$flag = 1
+  self = as.data.frame(cbind(nodes,nodes,rep(1,length(nodes))))
+
+  colnames(link) = colnames(self) = c("i","j","flag")
+  link = rbind(link,self) %>% arrange(i,j)
+  link_mat = long2wide(long = link,row_names_from = "i",
+                       col_names_from = "j",values_from = "flag",symmetric = TRUE)
+  link_mat[is.na(link_mat)] = 0
+  link_mat = 1-as.matrix(link_mat) %^% 20
+
+  cluster = dbscan(as.dist(link_mat),eps = 0,minPts = 1)
+  return(cluster$cluster)
+}
+
+#' @title mnn_dist
+#'
+#' @description Identify Mutual Nearest Neighbors (MNN) from Distance Matrix
+#' @details
+#'
+#' Computes mutual nearest neighbors between items based on a symmetric distance matrix.
+#' A pair (i, j) is considered mutual if i is among the k nearest neighbors of j, and j is among the k nearest neighbors of i.
+#'
+#' @param dis A symmetric distance matrix (as `dist` or matrix) representing pairwise distances.
+#' @param k Integer. Number of nearest neighbors to consider.
+#'
+#' @return A data frame with columns `i` and `j`, representing mutual nearest neighbor pairs with `i < j`.
+#'
+#' @importFrom RANN kNN
+#' @importFrom dplyr inner_join filter
+#' @examples
+#' dist_mat <- dist(matrix(rnorm(100), ncol = 5))
+#' mnn_pairs <- mnn_dist(dist_mat, k = 5)
+#' head(mnn_pairs)
+#'
+#' @export
+mnn_dist = function(dis,k){
+  knn = kNN(as.dist(dis),k)
+
+  id = cbind(rep(1:nrow(knn$id),times = k),c(knn$id))
+  rid = id[,c(2,1)]
+
+  id = as.data.frame(id)
+  rid = as.data.frame(rid)
+  colnames(id) = colnames(rid) = c("i","j")
+
+  mnn = inner_join(id,rid,by = c("i","j")) %>% filter(i < j)
+  return(mnn)
+}
+
+#' @title nearest_knn
+#'
+#' @description Extract Top k Nearest Neighbor Pairs by Distance
+#' @details
+#'
+#' Returns the top closest k-nearest neighbor pairs based on pairwise distances, excluding duplicates.
+#'
+#' @param dis A symmetric distance matrix (as `dist` or matrix).
+#' @param k Integer. Number of nearest neighbors to compute per item.
+#' @param top Integer. Number of top-ranked unique nearest neighbor pairs to return (default: 3).
+#'
+#' @return A data frame with columns `i`, `j`, and `dis`, listing the top nearest neighbor pairs and their distances.
+#'
+#' @importFrom RANN kNN
+#' @importFrom dplyr arrange
+#' @examples
+#' dist_mat <- dist(matrix(rnorm(100), ncol = 5))
+#' top_pairs <- nearest_knn(dist_mat, k = 5, top = 10)
+#' head(top_pairs)
+#'
+#' @export
+nearest_knn = function(dis,k,top = 3){
+  knn = kNN(as.dist(dis),k)
+
+  id = cbind(rep(1:nrow(knn$id),times = k),c(knn$id))
+  id_dis = as.data.frame(cbind(id,c(knn$dis)))
+
+  colnames(id_dis) = c("i","j","dis")
+  id_dis = id_dis %>% arrange(dis,i,j)
+  id_dis = id_dis[!duplicated(data.frame(t(apply(id_dis[,c("i","j")], 1, sort)))),]
+
+  return(id_dis[1:min(top,nrow(id_dis)),])
+}
+
+#' @title cluster_merge
+#'
+#' @description Merge Elements from a List According to Cluster Assignments
+#' @details
+#'
+#' Given a list and a vector of cluster assignments, merges list elements that belong to the same cluster into grouped lists.
+#'
+#' @param input_list A list of vectors or objects to be grouped.
+#' @param cluster A vector of cluster labels of the same length as `input_list`.
+#'
+#' @return A list where each element contains the merged values from the same cluster.
+#'
+#' @examples
+#' lst <- list(1:2, 3:4, 5, 6)
+#' clust <- c(1, 1, 2, 2)
+#' merged <- cluster_merge(lst, clust)
+#' print(merged)
+#'
+#' @export
+cluster_merge = function(input_list,cluster){
+  if(length(input_list) != length(cluster)){
+    stop("The length of the list and the cluster identity don't match!")
+  }
+  else{
+    out = lapply(unique(cluster),function(i){
+      return(unlist(input_list[cluster == i]))
+    })
+    return(out)
+  }
+}
+
+#' @title combn_dedup
+#'
+#' @description Remove Duplicate Combinations (Order-Invariant)
+#' @details
+#'
+#' Given a matrix of combinations (e.g., from `combn()`), this function removes duplicates where row elements are identical up to ordering.
+#'
+#' @param combn A two-column matrix where each row is a pairwise combination.
+#'
+#' @return A logical vector indicating whether each row is a unique (order-insensitive) combination.
+#'
+#' @examples
+#' combn_mat <- matrix(c(1,2,2,1,3,4), ncol = 2, byrow = TRUE)
+#' unique_flags <- combn_dedup(combn_mat)
+#' print(unique_flags)
+#'
+#' @export
+combn_dedup = function(combn){
+  flag = as.data.frame(t(apply(combn, 1, sort)))
+  flag = do.call(paste, c(flag, sep = ","))
+
+  return(!duplicated(flag))
+  combn = combn[!duplicated(flag),]
+  return(combn)
+}
+
+#' @title dismat_mst
+#'
+#' @description Compute the Minimum Spanning Tree (MST) from a Distance Matrix
+#' @details
+#'
+#' Converts a full square distance matrix into a graph and computes the minimum spanning tree.
+#' Returns the MST edges as a long-format data frame.
+#'
+#' @param mat A symmetric numeric distance matrix.
+#'
+#' @return A data frame with columns `from`, `to`, and `weight` representing MST edges.
+#'
+#' @importFrom igraph graph_from_data_frame mst simplify as_long_data_frame V
+#' @importFrom dplyr select mutate filter
+#' @examples
+#' dist_mat <- as.matrix(dist(matrix(rnorm(25), ncol = 5)))
+#' mst_edges <- dismat_mst(dist_mat)
+#' print(mst_edges)
+#'
+dismat_mst = function(mat){
+  long = wide2long(mat)
+  colnames(long) = c("from","to","weight")
+  long = long %>% filter(from != to)
+
+  graph = simplify(graph_from_data_frame(long,directed = FALSE))
+
+  seed_mst = mst(graph)
+  seed_mst_edge = as_long_data_frame(seed_mst) %>% dplyr::select(from,to,weight)
+  seed_mst_edge = seed_mst_edge %>% mutate(from = names(V(seed_mst))[from],to = names(V(seed_mst))[to])
+  seed_mst_edge = seed_mst_edge %>% mutate(from = as.numeric(from),to = as.numeric(to))
+
+  return(seed_mst_edge)
+}
+
+#' @title dis_point_to_edge
+#'
+#' @description Compute Distance from a Point to a Line Segment
+#' @details
+#'
+#' Calculates the shortest distance from a point to a line segment in 2D or 3D space,
+#' and returns the scalar projection position along the segment.
+#'
+#' @param point A numeric vector representing a point.
+#' @param edge_start A numeric vector representing the start of the edge.
+#' @param edge_end A numeric vector representing the end of the edge.
+#'
+#' @return A numeric vector of length 2: the shortest distance and the scalar projection (t in [0,1]).
+#'
+#' @examples
+#' d <- dis_point_to_edge(c(0, 0), c(1, 0), c(1, 1))
+#' print(d)  # Expect ~1.0 distance to the vertical segment
+#'
+#' @export
+dis_point_to_edge <- function(point, edge_start, edge_end) {
+
+  # Convert inputs to matrices for vectorized operations
+  P <- as.matrix(point)
+  A <- as.matrix(edge_start)
+  B <- as.matrix(edge_end)
+
+  # Vector from A to B (the edge direction)
+  AB <- B - A
+
+  # Vector from A to the point P
+  AP <- P - A
+
+  # Project vector AP onto AB, and normalize by the length of AB squared
+  t <- sum(AP * AB) / sum(AB * AB)
+
+  # Restrict t to [0, 1] to stay within the segment
+  t <- pmax(0, pmin(1, t))
+
+  # Find the closest point on the edge to the point P
+  closest_point <- A + t * AB
+
+  # Compute the distance between the point and the closest point on the edge
+  distance <- sqrt(sum((P - closest_point)^2))
+
+  return(c(distance,t))
+}
+
+#' @title dis_points_to_edges
+#'
+#' @description Compute Distances from Multiple Points to Multiple Edges
+#' @details
+#'
+#' Computes the distance from each point to each edge, and also returns the scalar projection
+#' for each edge to understand where the closest point falls along the segment.
+#'
+#' @param points A data frame or matrix where each row is a point (2D or 3D).
+#' @param edges A list of edge definitions, where each element is a 2-row matrix: row 1 = start, row 2 = end.
+#'
+#' @return A list with two components:
+#' \describe{
+#'   \item{map}{Matrix of scalar projection values (t in [0,1]) for each point–edge pair.}
+#'   \item{dis}{Matrix of shortest distances for each point–edge pair.}
+#' }
+#'
+#' @examples
+#' pts <- data.frame(x = rnorm(3), y = rnorm(3))
+#' edge1 <- matrix(c(0, 0, 1, 1), ncol = 2, byrow = TRUE)
+#' edge2 <- matrix(c(0, 1, 1, 0), ncol = 2, byrow = TRUE)
+#' dists <- dis_points_to_edges(pts, list(edge1, edge2))
+#' str(dists)
+#'
+#' @export
+dis_points_to_edges <- function(points,edges){
+  dis = lapply(edges,function(x){
+    edge_start = unlist(x[1,])
+    edge_end = unlist(x[2,])
+    sub = lapply(1:nrow(points),function(y){
+      coord = unlist(points[y,])
+      out = dis_point_to_edge(coord,edge_start,edge_end)
+      return(out)
+    })
+    sub = do.call(rbind,sub)
+    return(sub)
+  })
+  dis = do.call(cbind,dis)
+
+  map = dis[,seq(1,ncol(dis),2)]
+  dis = dis[,seq(2,ncol(dis),2)]
+
+  out = list("map" = map,"dis" = dis)
+  return(out)
+}
+
+#' @title knn_between_groups
+#'
+#' @description Compute k-Nearest Neighbors Between Groups
+#' @details
+#'
+#' For each row in a distance matrix, returns the indices and distances of the k nearest neighbors (smallest distances).
+#' Returns a long-format data frame of all (i, j) pairs.
+#'
+#' @param distance A numeric symmetric distance matrix.
+#' @param k Integer. Number of nearest neighbors to find for each group.
+#'
+#' @return A data frame with columns:
+#' \describe{
+#'   \item{group1}{Row index of the source group}
+#'   \item{group2}{Index of the neighbor group}
+#'   \item{dist}{Distance between group1 and group2}
+#' }
+#'
+#' @examples
+#' dist_mat <- as.matrix(dist(matrix(rnorm(100), nrow = 10)))
+#' knn_df <- knn_between_groups(dist_mat, k = 3)
+#' head(knn_df)
+#'
+#' @export
+knn_between_groups = function(distance,k){
+  distance = as.matrix(distance)
+  nn = lapply(1:nrow(distance),function(i){
+    x = distance[i,]
+
+    x_rank = rank(x,ties.method = "min")
+    sub_id = which(x_rank %in% 1:k)
+    sub_id = sub_id[order(x[sub_id])]
+
+    sub_dis = x[sub_id]
+    return(cbind(i,sub_id,sub_dis))
+  })
+  nn = as.data.frame(do.call(rbind,nn))
+  colnames(nn) = c("group1","group2","dist")
+  rownames(nn) = NULL
+  return(nn)
+}
+
+#' @title find_mutual_nn
+#'
+#' @description Identify Mutual Nearest Neighbors Between Groups
+#' @details
+#'
+#' Finds mutually shared k-nearest neighbors from both row and column perspectives of a distance matrix.
+#' Optionally filters by a distance threshold.
+#'
+#' @param distance A numeric symmetric distance matrix.
+#' @param k Integer. Number of neighbors to consider per group.
+#' @param dis_thresh Optional numeric threshold. If set, only mutual neighbors with distance < threshold are returned.
+#'
+#' @return A data frame of mutual nearest neighbor pairs with columns:
+#' \describe{
+#'   \item{group1}{Index of first group}
+#'   \item{group2}{Index of second group}
+#'   \item{dist}{Distance between groups}
+#' }
+#'
+#' @examples
+#' dist_mat <- as.matrix(dist(matrix(rnorm(100), nrow = 10)))
+#' mnn_df <- find_mutual_nn(dist_mat, k = 3, dis_thresh = 0.5)
+#' head(mnn_df)
+#'
+#' @export
+find_mutual_nn = function(distance,k,dis_thresh = NULL){
+  group1_flat = knn_between_groups(distance,k)
+  group2_flat = knn_between_groups(t(distance),k)
+
+  colnames(group2_flat) = c("group2","group1","dist")
+  group2_flat = group2_flat[,c("group1","group2","dist")]
+
+  #return(list(group1_flat,group2_flat))
+  mnn = as.data.frame(inner_join(group1_flat,group2_flat,by = c("group1","group2","dist")))
+  if(!is.null(dis_thresh)){
+    mnn = mnn %>% filter(dist < dis_thresh)
+  }
+  return(mnn)
+}
+
+#' @title mat_split
+#'
+#' @description Split a Matrix into Row or Column Chunks
+#' @details
+#'
+#' Splits a matrix into smaller matrices based on user-defined row or column sizes.
+#'
+#' @param mat A matrix to be split.
+#' @param size An integer vector specifying the size of each chunk (rows or columns).
+#' @param index Integer. If `0` (default), splits by rows; if `1`, splits by columns.
+#'
+#' @return A list of matrices representing the chunks.
+#'
+#' @examples
+#' mat <- matrix(1:20, nrow = 5)
+#' chunks <- mat_split(mat, size = c(2, 3), index = 0)
+#' str(chunks)
+#'
+#' @export
+mat_split = function(mat,size,index = 0){
+  if(index == 0){
+    if(sum(size) != nrow(mat)) {
+      stop("The sum of sizes must equal the number of rows in the matrix.")
+    }
+  }
+  else if(index == 1){
+    if(sum(size) != ncol(mat)) {
+      stop("The sum of sizes must equal the number of columns in the matrix.")
+    }
+  }
+
+  split_indices <- cumsum(size)
+
+  small_matrices <- lapply(seq_along(size), function(i) {
+    start_col <- if (i == 1) 1 else (split_indices[i - 1] + 1)
+    end_col <- split_indices[i]
+
+    if(index == 0){
+      out = mat[start_col:end_col, , drop = FALSE]
+    }
+    if(index == 1){
+      out = mat[, start_col:end_col, drop = FALSE]
+    }
+
+    return(out)
+  })
+
+  return(small_matrices)
+}
+
+#' @title sparse_manupulation
+#'
+#' @description Apply a Transformation Function to a Sparse Matrix
+#' @details
+#'
+#' Applies a user-defined function to the non-zero entries of a sparse matrix and returns a new sparse matrix.
+#'
+#' @param mat A sparse matrix (class `dgCMatrix`).
+#' @param func A function to apply to the values (e.g., `log`, `exp`, or custom).
+#'
+#' @return A sparse matrix with the transformed values.
+#'
+#' @importFrom Matrix summary
+#' @examples
+#' library(Matrix)
+#' mat <- rsparsematrix(5, 5, density = 0.5)
+#' transformed <- sparse_manupulation(mat, log1p)
+#' print(transformed)
+#'
+#' @export
+sparse_manupulation = function(mat,func){
+  long = as.data.frame(summary(mat))
+  long = long %>% mutate(dis = func(x))
+
+  sparse = long2sparse(long,row_names_from = "i",col_names_from = "j",values_from = "dis",
+              unique_rows = 1:nrow(mat),unique_cols = 1:ncol(mat),symmetric = FALSE)
+
+  return(sparse)
+}
+
+#' @title filter_network
+#'
+#' @description Filter Sparse Graph to Retain Nodes with Minimum Degree
+#' @details
+#'
+#' Iteratively removes nodes from a symmetric adjacency matrix until all remaining nodes have at least `n_neighbors` edges.
+#'
+#' @param adj A symmetric adjacency matrix (numeric or sparse).
+#' @param n_neighbors Integer. The minimum number of neighbors each node must have to remain in the network (default: 5).
+#'
+#' @return A filtered adjacency matrix containing only nodes with at least `n_neighbors` connections.
+#'
+#' @examples
+#' mat <- matrix(sample(0:1, 100, replace = TRUE, prob = c(0.9, 0.1)), nrow = 10)
+#' mat[lower.tri(mat)] <- t(mat)[lower.tri(mat)]
+#' diag(mat) <- 0
+#' filtered <- filter_network(mat, n_neighbors = 2)
+#'
+#' @export
+filter_network = function(adj,n_neighbors = 5){
+  #if(!is_symmetric(adj)){
+  #  stop("The adjacent matrix should be symmetric!")
+  #}
+  flag = rowSums(adj > 0) >= n_neighbors
+  while(sum(flag) < nrow(adj)){
+    adj = adj[flag,flag]
+    flag = rowSums(adj > 0) >= n_neighbors
+  }
+  return(adj)
+}
+
+#' @title is_symmetric
+#'
+#' @description Check if a Matrix is Symmetric
+#' @details
+#'
+#' Determines whether a matrix is equal to its transpose within numerical tolerance.
+#'
+#' @param matrix A square numeric matrix.
+#'
+#' @return Logical value: `TRUE` if the matrix is symmetric, `FALSE` otherwise.
+#'
+#' @examples
+#' mat <- matrix(c(1, 2, 2, 1), nrow = 2)
+#' is_symmetric(mat)  # TRUE
+#'
+#' @export
+is_symmetric <- function(matrix) {
+  isTRUE(all.equal(matrix, t(matrix)))
+}
+
+#' @title build_edges
+#'
+#' @description Build Temporal Edge Table from Time-Series Data Frame
+#' @details
+#'
+#' For each group defined by `id_col`, constructs edges between consecutive time points based on `order_col`.
+#' Adds forward-shifted features (e.g., lead values) to represent transitions.
+#'
+#' @param df A data frame with time-ordered entries per group.
+#' @param id_col Column name (string) indicating group identity (e.g., cell or clone ID).
+#' @param order_col Column name (string) indicating time or order.
+#' @param feature_cols Optional. Vector of column names to use as node features. If `NULL`, all columns except `id_col` and `order_col` are used.
+#'
+#' @return A data frame where each row represents a temporal edge with start/end times and next-step features.
+#'
+#' @importFrom dplyr select arrange_at group_by_at mutate lead filter all_of
+#' @examples
+#' df <- data.frame(id = c(1, 1, 2, 2), time = c(1, 2, 1, 2), val = c(5, 6, 3, 4))
+#' edges <- build_edges(df, id_col = "id", order_col = "time")
+#' print(edges)
+#'
+#' @export
+build_edges = function(df,id_col,order_col,feature_cols = NULL){
+  if(is.null(feature_cols)){
+    feature_cols = setdiff(colnames(df),c(id_col,order_col))
+  }
+
+  df = df %>% select(all_of(c(id_col,order_col,feature_cols)))
+  edge_table <- df %>%
+    arrange_at(c(id_col, order_col)) %>%  # Ensure proper ordering
+    group_by_at(id_col) %>%
+    mutate(across(all_of(feature_cols), lead, .names = "Next_{.col}"),  # Dynamically create Next_X, Next_Y, etc.
+           Next_Time = lead(!!sym(order_col))) %>%
+    filter(!is.na(Next_Time)) %>%  # Keep only valid edges
+    select(!!sym(id_col),Start = !!sym(order_col), End = Next_Time, everything())
+
+  return(edge_table)
+}
+
+#' @title ceil_digit
+#'
+#' @description Round Up a Number to a Specified Number of Decimal Places
+#' @details
+#'
+#' Rounds numeric values upward to the nearest multiple at `n` decimal places.
+#'
+#' @param x A numeric vector to round up.
+#' @param n Integer. Number of decimal places to retain.
+#'
+#' @return A numeric vector rounded up to `n` digits.
+#'
+#' @examples
+#' ceil_digit(3.1415, 2)  # 3.15
+#' ceil_digit(c(2.001, 2.009), 2)  # c(2.01, 2.01)
+#'
+#' @export
+ceil_digit <- function(x, n) {
+  scale <- 10^n
+  ceiling(x * scale) / scale
+}
+
+#' @title knn_flat
+#'
+#' @description Compute Flattened k-Nearest Neighbor Edges
+#' @details
+#'
+#' Computes a flattened list of k-nearest neighbor edges for each point in a matrix or distance matrix.
+#' Returns a long-format data frame of neighbor pairs and their distances, with optional symmetry, self-edges, or deduplication.
+#'
+#' @param x A numeric matrix (rows = points) or a distance matrix.
+#' @param k Integer. Number of neighbors to compute per point.
+#' @param input Character. Either `"matrix"` or `"dist"` (default: `"matrix"`).
+#' @param symmetric Logical. If `TRUE`, ensures bidirectional edges (default: `FALSE`).
+#' @param if_dedup Logical. If `TRUE`, removes redundant (i,j)/(j,i) pairs (default: `FALSE`).
+#' @param if_self Logical. If `TRUE`, includes self-edges (i,i) with distance 0 (default: `FALSE`).
+#'
+#' @return A data frame with columns `node1`, `node2`, and `dist`.
+#'
+#' @importFrom dbscan kNN
+#' @examples
+#' mat <- matrix(rnorm(100), ncol = 2)
+#' edges <- knn_flat(mat, k = 5, symmetric = TRUE)
+#' head(edges)
+#'
+#' @export
+knn_flat = function(x,k,input = "matrix",symmetric = FALSE,if_dedup = FALSE,if_self = FALSE){
+  input = match.arg(input,choices = c("matrix","dist"))
+
+  if(input == "matrix"){
+    knn = dbscan::kNN(x = x,k = k)
+  }
+  else if(input == "dist"){
+    knn = dbscan::kNN(x = as.dist(x),k = k)
+  }
+
+
+  flat = cbind(rep(1:nrow(knn$id),ncol(knn$id)),c(knn$id))
+  flat = cbind(flat,c(knn$dist))
+  colnames(flat) = c("node1","node2","dist")
+  if(symmetric){
+    flat = long_symmetry(flat,row_names_from = "node1",col_names_from = "node2")
+  }
+  if(if_dedup){
+    flag = combn_dedup(combn = flat[,c(1,2)])
+    flat = as.data.frame(flat[flag,])
+  }
+  if(if_self){
+    node_uniq = 1:nrow(x)
+    self = as.data.frame(cbind(node_uniq,node_uniq,0))
+    colnames(self) = c("node1","node2","dist")
+    flat = rbind(flat,self)
+  }
+  return(flat)
+}
+
+#' @title embedding2knn
+#'
+#' @description Compute k-Nearest Neighbor Graph from Embedding
+#' @details
+#'
+#' Converts a data matrix (e.g., UMAP or PCA coordinates) into a k-nearest neighbor graph.
+#' Returns a sparse matrix with either pairwise distances or computed connectivities.
+#'
+#' @param embedding A numeric matrix of embeddings (rows = observations).
+#' @param k Integer. Number of nearest neighbors to use.
+#' @param mode Character. Either `"dist"` for raw distances or `"connectivity"` for Gaussian kernel weights (default: `"connectivity"`).
+#' @param ... Additional arguments passed to `knn_flat()`.
+#'
+#' @return A sparse matrix representing the k-NN graph (class `dgCMatrix`).
+#'
+#' @examples
+#' mat <- matrix(rnorm(100), ncol = 2)
+#' knn_mat <- embedding2knn(mat, k = 5)
+#' print(knn_mat)
+#'
+#' @export
+embedding2knn = function(embedding,k,mode = "connectivity",...){
+  mode = match.arg(mode,c("dist","connectivity"))
+
+  knn = as.data.frame(knn_flat(embedding,k = k,input = "matrix",symmetric = TRUE,...))
+  colnames(knn) = c("node1","node2","dist")
+
+  if(mode == "connectivity"){
+    sigma = knn %>% group_by(node1) %>% summarise(sigma = mean(dist))
+    sigma = sigma$sigma
+
+    knn = knn %>% mutate(connectivity = exp(-dist^2/(sigma[node1]*sigma[node2])))
+
+    knn = long2sparse(knn,row_names_from = "node1",col_names_from = "node2",values_from = "connectivity",
+                      unique_rows = 1:nrow(embedding),unique_cols = 1:nrow(embedding),symmetric = FALSE)
+  }
+  else{
+    knn = long2sparse(knn,row_names_from = "node1",col_names_from = "node2",values_from = "dist",
+                      unique_rows = 1:nrow(embedding),unique_cols = 1:nrow(embedding),symmetric = FALSE)
+  }
+
+  return(knn)
+}
+
+#' @title dist2knn
+#'
+#' @description Compute k-Nearest Neighbor Graph from Precomputed Distances
+#' @details
+#'
+#' Given a distance matrix, constructs a k-nearest neighbor graph as a sparse matrix.
+#' Optionally converts distances to Gaussian kernel similarities.
+#'
+#' @param embedding A distance matrix or `dist` object.
+#' @param k Integer. Number of nearest neighbors to compute.
+#' @param mode Character. Either `"dist"` or `"connectivity"` (default: `"connectivity"`).
+#' @param ... Additional arguments passed to `knn_flat()`.
+#'
+#' @return A sparse matrix representing the k-NN graph (class `dgCMatrix`).
+#'
+#' @examples
+#' dmat <- dist(matrix(rnorm(100), ncol = 2))
+#' knn_graph <- dist2knn(dmat, k = 5)
+#' print(knn_graph)
+#'
+#' @export
+dist2knn = function(embedding,k,mode = "connectivity",...){
+  mode = match.arg(mode,c("dist","connectivity"))
+
+  knn = as.data.frame(knn_flat(embedding,k = k,input = "dist",symmetric = TRUE,...))
+  colnames(knn) = c("node1","node2","dist")
+
+  if(mode == "connectivity"){
+    knn = knn %>% group_by(node1) %>% mutate(connectivity = exp(-dist^2/2*mean(dist)^2))
+
+    knn = long2sparse(knn,row_names_from = "node1",col_names_from = "node2",values_from = "connectivity",
+                      unique_rows = 1:nrow(embedding),unique_cols = 1:nrow(embedding),symmetric = FALSE)
+  }
+  else{
+    knn = long2sparse(knn,row_names_from = "node1",col_names_from = "node2",values_from = "dist",
+                      unique_rows = 1:nrow(embedding),unique_cols = 1:nrow(embedding),symmetric = FALSE)
+  }
+
+  return(knn)
+}
+
+#' @title compute_transition
+#'
+#' @description Compute Normalized Transition Matrix from Connectivity Matrix
+#' @details
+#'
+#' Converts a symmetric connectivity matrix into a double-normalized transition matrix suitable for diffusion-based analyses.
+#' The output matrix is scaled such that it preserves local affinities and is symmetric with unit row and column scaling.
+#'
+#' @param connectivity A symmetric numeric or sparse matrix representing pairwise affinities (e.g., k-NN graph).
+#'
+#' @return A symmetric matrix representing the normalized transition matrix.
+#'
+#' @details The transition matrix is computed as:
+#' \deqn{T = Z D^{-1} A D^{-1} Z}
+#' where \eqn{A} is the input matrix, \eqn{D} is the row sum diagonal matrix, and \eqn{Z} rescales the result for symmetry.
+#'
+#' @importFrom Matrix Diagonal
+#' @examples
+#' library(Matrix)
+#' mat <- Matrix::rsparsematrix(5, 5, density = 0.6)
+#' mat <- 0.5 * (mat + t(mat))  # ensure symmetry
+#' trans <- compute_transition(mat)
+#' print(trans)
+#'
+#' @export
+compute_transition = function(connectivity){
+  rowsum = rowSums(connectivity)
+
+  Q = Matrix::Diagonal(x = 1/rowsum)
+  T_mat = Q %*% connectivity %*% Q
+
+  rowsum = rowSums(T_mat)
+  Z = Matrix::Diagonal(x = 1/sqrt(rowsum))
+  T_mat = Z %*% T_mat %*% Z
+  return(T_mat)
+}
+
+#' @title sparse_norm
+#'
+#' @description Normalize a Sparse Matrix by Rows or Columns
+#' @details
+#'
+#' Applies row-wise or column-wise L1 normalization to a sparse matrix.
+#' Returns a new sparse matrix with normalized entries, preserving sparsity.
+#'
+#' @param mat A sparse matrix (class `dgCMatrix`).
+#' @param dim Integer. Dimension to normalize over: `1` = rows (default), `2` = columns.
+#'
+#' @return A sparse matrix with normalized values.
+#'
+#' @importFrom Matrix Diagonal rowSums colSums drop0
+#' @examples
+#' library(Matrix)
+#' m <- rsparsematrix(5, 5, density = 0.4)
+#' norm_mat <- sparse_norm(m, dim = 1)
+#' print(norm_mat)
+#'
+#' @export
+sparse_norm = function(mat,dim = 1){
+  if(dim == 1){
+    mat_norm = Diagonal(x = 1 / Matrix::rowSums(mat)) %*% mat
+  }
+  else if(dim == 2){
+    mat_norm = mat %*% Diagonal(x = 1 / Matrix::colSums(mat))
+  }
+  mat_norm@x[is.infinite(mat_norm@x)] <- 0
+  mat_norm = drop0(mat_norm)
+  return(mat_norm)
+}
+
+#' @title bin_filter
+#'
+#' @description Iterative Binning Filter to Remove Sparse Bins
+#' @details
+#'
+#' Filters rows from a data frame such that each bin of a numeric column contains at least `thresh` observations.
+#' Binning is performed using `cut()` over a specified number of breaks. The process repeats until all bins meet the threshold.
+#'
+#' @param x A data frame.
+#' @param col A string specifying the column to bin and filter by.
+#' @param thresh Minimum number of rows required per bin (default: 10).
+#' @param breaks Number of breaks to use in `cut()` (default: 100).
+#'
+#' @return A filtered data frame with the same columns as `x`, excluding the temporary bin column.
+#'
+#' @importFrom dplyr mutate group_by summarise filter select
+#' @examples
+#' df <- data.frame(val = runif(1000))
+#' df_filtered <- bin_filter(df, col = "val", thresh = 20)
+#' hist(df_filtered$val)
+#'
+#' @export
+bin_filter = function(x,col,thresh = 10,breaks = 100){
+  x = as.data.frame(x)
+
+  while(TRUE){
+    x = x %>% mutate(bin = cut(!!sym(col),breaks = breaks))
+    x_bin = x %>% group_by(bin) %>% summarise(count = n()) %>% filter(count >= thresh)
+
+    x_filter = x %>% filter(bin %in% x_bin$bin)
+    if(nrow(x_filter) == nrow(x)){
+      break
+    }
+    else{
+      x = x_filter
+    }
+  }
+
+  return(x_filter %>% dplyr::select(-bin))
+}
+
+#' @title dis2connec_sparse
+#'
+#' @description Convert Sparse Distance Matrix to Sparse Connectivity Matrix
+#' @details
+#'
+#' Transforms a sparse distance matrix into a Gaussian kernel-based connectivity matrix using a locally adaptive bandwidth.
+#' The resulting matrix can be interpreted as a similarity graph.
+#'
+#' @param D A symmetric sparse distance matrix (class `dgCMatrix`).
+#'
+#' @return A sparse matrix of connectivities (class `dgCMatrix`) where weights represent local affinities.
+#'
+#' @importFrom Matrix summary
+#' @importFrom dplyr group_by summarise mutate
+#' @examples
+#' library(Matrix)
+#' D <- rsparsematrix(100, 100, density = 0.05)
+#' D <- 0.5 * (D + t(D))  # ensure symmetry
+#' C <- dis2connec_sparse(D)
+#' print(C[1:5, 1:5])
+#'
+#' @export
+dis2connec_sparse = function (D)
+{
+  D_long = as.data.frame(summary(D))
+  colnames(D_long) = c("node1", "node2", "dist")
+
+  sigma = D_long %>% group_by(node1) %>% summarise(sigma = mean(dist))
+  all_ids <- data.frame(node1 = 1:nrow(D))
+  sigma = merge(all_ids, sigma, by = "node1", all.x = TRUE)
+  sigma = sigma$sigma
+
+  D_long = D_long %>% mutate(connectivity = exp(-dist^2/(sigma[node1] *
+                                                           sigma[node2])))
+
+  C = long2sparse(D_long, row_names_from = "node1", col_names_from = "node2",
+                  values_from = "connectivity", unique_rows = 1:nrow(D),
+                  unique_cols = 1:nrow(D), symmetric = FALSE)
+  return(C)
+}
+
+#' @title mass_filter
+#'
+#' @description Filter Vector Elements by Cumulative Mass Threshold
+#' @details
+#'
+#' Retains the top elements in a numeric vector based on cumulative mass. Elements contributing least to the total
+#' are zeroed out until the specified proportion of total mass (`thresh`) is retained.
+#'
+#' @param mass A numeric vector of values (e.g., weights, similarities, or densities).
+#' @param thresh Numeric. Proportion of total cumulative mass to retain (default: 0.9).
+#'
+#' @return A numeric vector of the same length as `mass`, with low-contributing elements set to zero.
+#'
+#' @details This function normalizes the input to sum to 1, ranks the elements by size, and sets to zero those
+#' contributing below the cutoff needed to achieve `thresh` cumulative mass. Useful for sparsifying matrices.
+#'
+#' @examples
+#' x <- runif(10)
+#' filtered <- mass_filter(x, thresh = 0.8)
+#' print(filtered)
+#'
+#' @export
+mass_filter = function(mass,thresh = 0.9){
+  mass_norm = mass/sum(mass)
+  mass_sort = sort(mass_norm,decreasing = TRUE)
+  mass_accumulate = cumsum(mass_sort)
+
+  flag = mass_accumulate < thresh
+  if(sum(flag) == 0){
+    lwr = thresh
+  }
+  else{
+    lwr = min(mass_sort[flag])
+  }
+  mass[mass_norm < lwr] = 0
+  return(mass)
+}
+
+#' @title mat_sparsify
+#'
+#' @description Sparsify a Dense Matrix by Cumulative Mass Filtering
+#' @details
+#'
+#' Applies mass-based thresholding to rows and columns to keep only the most informative values. For each row/column, entries are retained until the cumulative sum reaches a specified mass (e.g., 90%).
+#'
+#' @param mat A numeric matrix.
+#' @param row_mass Proportion of row-wise cumulative mass to retain (default: 0.9).
+#' @param col_mass Proportion of column-wise cumulative mass to retain (default: 0.9).
+#'
+#' @return A sparsified matrix of the same shape with many zero entries.
+#'
+#' @examples
+#' mat <- matrix(runif(100), nrow = 10)
+#' mat_sparse <- mat_sparsify(mat, row_mass = 0.8, col_mass = 0.8)
+#' print(mat_sparse)
+#'
+#' @export
+mat_sparsify = function(mat,row_mass = 0.9,col_mass = 0.9){
+  mat = t(apply(mat,1,function(x) mass_filter(x,thresh = row_mass)))
+  mat = apply(mat,2,function(x) mass_filter(x,thresh = col_mass))
+  return(mat)
+}
+
+#' @title top_k
+#'
+#' @description Extract Top-k Elements from a Numeric Vector
+#' @details
+#'
+#' Returns the top `k` elements from a numeric vector, sorted in ascending or descending order.
+#'
+#' @param v A numeric vector.
+#' @param k Integer. Number of top elements to return.
+#' @param decreasing Logical. If `TRUE`, returns the `k` largest values (default: `FALSE` = smallest).
+#'
+#' @return A numeric vector of length `k` containing the top `k` values.
+#'
+#' @examples
+top_k = function(v,k,decreasing = FALSE){
+  v = sort(v,decreasing = decreasing)
+  return(v[1:k])
+}
