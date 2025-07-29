@@ -337,3 +337,34 @@ graph_clone_nn = function(graph,cell_clone_prob,prob_thresh = 0.1,k = 2,verbose 
 
   return(dis)
 }
+
+#' @title group_2_min
+#' @description Compute Average Minimal Pairwise Distance Between Two Groups
+#' @details
+#'
+#' Estimates a symmetric inter-group distance based on averaging the top-k smallest pairwise distances between two groups.
+#' This is useful for comparing cell groups or clone sets using a local-neighborhood approximation of intergroup proximity.
+#' If the submatrix between `group1` and `group2` has only one value, that value is returned.
+#' Otherwise, the function returns the mean of the average top-k distances across both rows and columns.
+#'
+#' @param distance A numeric matrix of pairwise distances (e.g., from `dist()` or `igraph::distances()`).
+#' @param group1 A vector of row indices corresponding to group 1.
+#' @param group2 A vector of column indices corresponding to group 2.
+#' @param k Integer. Number of nearest neighbors to average over (default: 3).
+#'
+#' @return A single numeric value representing the symmetric average distance between the two groups.
+#' @examples
+#' dist_mat <- matrix(runif(100), nrow = 10)
+#' d <- group_2_min(dist_mat, group1 = 1:3, group2 = 4:6, k = 2)
+#' print(d)
+group_2_min = function(distance,group1,group2, k = 3){
+  sub_dis = distance[group1,group2]
+  if(is.null(nrow(sub_dis))){
+    out = mean(sub_dis)
+  }
+  else{
+    out = mean(c(mean(apply(sub_dis,1,function(x) mean(top_k(x,k)))),
+                 mean(apply(sub_dis,2,function(x) mean(top_k(x,k))))))
+  }
+  return(out)
+}
