@@ -54,8 +54,8 @@ bin_filter_profile_mass = function(mass,time,thresh = 5, binsize = 0.005){
 #' @param lambda Non-negative regularization strength for ridge penalty (default: 1e-4).
 #'
 #' @return A list with components:
-#' {coef}{Estimated coefficient matrix (features × genes)}
-#' {rss}{Residual sum of squares per gene}
+#' coef:Estimated coefficient matrix (features × genes)
+#' rss:Residual sum of squares per gene
 #'
 #' @examples
 #' set.seed(1)
@@ -93,11 +93,11 @@ ridge_regression = function(X,G,lambda = 1e-4){
 #' @param test Statistical test to use for model comparison: `"F"` (default) or `"LRT"` (likelihood ratio test).
 #'
 #' @return A list with components:
-#' {stat}{A data frame with test statistic, p-value, mean expression difference, and Cohen's d for each gene}
-#' {df}{Degrees of freedom used for test}
-#' {coef}{Fitted coefficients from the full model}
-#' {design_null}{Design matrix for the null model}
-#' {design_full}{Design matrix for the full model}
+#' stat:A data frame with test statistic, p-value, mean expression difference, and Cohen's d for each gene
+#' df:Degrees of freedom used for test
+#' coef:Fitted coefficients from the full model
+#' design_null:Design matrix for the null model
+#' design_full:Design matrix for the full model
 #'
 #' @importFrom splines ns
 #' @importFrom dplyr mutate
@@ -237,8 +237,8 @@ cluster_profile_mass <- function(cell_profile_prob, cluster_label) {
 #' @param permute_n Integer. Number of permutations to perform (default: 300).
 #'
 #' @return A list with two elements:
-#' {prob}{Observed profile mass per cluster (same format as `cluster_profile_mass()`)}
-#' {pval}{Matrix of empirical p-values (1-sided) indicating profile enrichment}
+#' prob:Observed profile mass per cluster (same format as cluster_profile_mass())
+#' pval:Matrix of empirical p-values (1-sided) indicating profile enrichment
 #'
 #' @importFrom abind abind
 #' @examples
@@ -335,9 +335,9 @@ profile_cluster_DEG_permute = function(P, G, dpt, n = 50){
 #' @param permute_n Integer. Number of permutations for null model generation (default: 50).
 #'
 #' @return A list containing:
-#' {stat}{Data frame with statistics, empirical p-values, and FDR-adjusted p-values}
-#' {cell}{Character vector of cell IDs used in the test}
-#' {design_null, design_full, coef, df}{Model components from GAM fitting}
+#' stat:Data frame with statistics, empirical p-values, and FDR-adjusted p-values
+#' cell:Character vector of cell IDs used in the test
+#' design_null, design_full, coef, df:Model components from GAM fitting
 #'
 #' @importFrom dplyr filter_at mutate
 #' @importFrom stats p.adjust
