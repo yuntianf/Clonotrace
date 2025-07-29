@@ -21,13 +21,12 @@
 clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
                          overwrite = FALSE,exact = FALSE,...){
   cells = intersect(rownames(embedding),rownames(cell_clone_prob))
-  if(length(cells) != length(rownames(embedding)) |
-     length(cells) != length(rownames(cell_clone_prob))){
-    warning("The cell_clone_prob and embedding don't have the same rownames, will use the intersection!")
+  if(length(setdiff(rownames(cell_clone_prob),cells)) > 0){
+    warning("The cell_clone_prob has cells which are not in the cell embedding, those cells would be removed!")
   }
 
-  embedding = as.matrix(embedding[cells,,drop = FALSE])
-  cell_clone_prob = cell_clone_prob[cells,]
+  embedding = as.matrix(embedding)
+  cell_clone_prob = sync_sparse_rows(cell_clone_prob,rownames(embedding))
 
   if(file.exists(file.path(outpath,"cell_graph.rds")) & !overwrite){
     cat("The cell_graph is already calculated and overwrite is not allowed, will use the exsting one!\n")

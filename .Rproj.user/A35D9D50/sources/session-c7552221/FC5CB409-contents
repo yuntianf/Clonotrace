@@ -1142,3 +1142,51 @@ top_k = function(v,k,decreasing = FALSE){
   v = sort(v,decreasing = decreasing)
   return(v[1:k])
 }
+
+#' @title sync_sparse_rows
+#'
+#' @description Synchronize Rows of a Sparse Matrix to Match Target Row Names
+#' @details
+#'
+#' Ensures that a sparse matrix of class `dgCMatrix` has rows that exactly match a target set of row names.
+#' Adds missing rows filled with zeros if necessary, and reorders existing rows to match the specified order.
+#'
+#' @param sparse_mat A sparse matrix of class `dgCMatrix`, with rownames defined.
+#' @param target_rownames A character vector of desired rownames in the final matrix.
+#'
+#' @return A sparse matrix with the same number of columns and rownames exactly matching `target_rownames`.
+#'
+#' @details This is useful when aligning matrices from different sources (e.g., profiles, probabilities, annotations)
+#' in cases where missing rows should be treated as zero.
+#'
+#' @importFrom Matrix Matrix
+#' @examples
+#' library(Matrix)
+#' mat <- rsparsematrix(3, 4, density = 0.5)
+#' rownames(mat) <- c("A", "B", "C")
+#' synced <- sync_sparse_rows(mat, target_rownames = c("A", "B", "C", "D"))
+#' dim(synced)  # Should be 4 x 4
+#'
+#' @export
+sync_sparse_rows <- function(sparse_mat, target_rownames) {
+  if (!inherits(sparse_mat, "dgCMatrix")) {
+    stop("sparse_mat must be of class 'dgCMatrix'")
+  }
+
+  existing_rows <- rownames(sparse_mat)
+  missing_rows <- setdiff(target_rownames, existing_rows)
+
+  if (length(missing_rows) > 0) {
+    n_missing <- length(missing_rows)
+    zero_block <- Matrix::Matrix(0, nrow = n_missing, ncol = ncol(sparse_mat), sparse = TRUE)
+    rownames(zero_block) <- missing_rows
+    colnames(zero_block) <- colnames(sparse_mat)
+
+    sparse_mat <- rbind(sparse_mat, zero_block)
+  }
+
+  # Reorder to match target rownames
+  sparse_mat <- sparse_mat[target_rownames, , drop = FALSE]
+
+  return(sparse_mat)
+}
