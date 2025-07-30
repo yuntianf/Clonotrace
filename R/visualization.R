@@ -239,3 +239,57 @@ scatterpie <- function(scatter_coord, composition,
   return(layers)
 }
 
+
+#' @title umap_from_knn
+#' @description Compute UMAP Embedding from a kNN Graph
+#' @details
+#'
+#' Runs UMAP on a filtered kNN adjacency matrix, ensuring that all nodes have at least `n_neighbors`.
+#' Assumes the embedding is computed via a Python-based backend (e.g., `umap_from_knn_py()`).
+#'
+#' @param adj A sparse adjacency matrix (class `dgCMatrix`) representing a kNN graph.
+#' @param n_neighbors Integer. Minimum number of neighbors required per node (default: 5).
+#' @param seed Integer. Random seed for UMAP initialization (default: 1024).
+#'
+#' @return A data frame with columns `umap_1` and `umap_2` and rownames matching input adjacency matrix.
+#'
+#' @details This function filters the graph to remove low-degree nodes before computing UMAP.
+#'
+#' @export
+umap_from_knn = function(adj,n_neighbors = 5,seed = 1024){
+  adj = filter_network(adj,n_neighbors)
+
+  knn_umap = umap_from_knn_py(adj,
+                              n_neighbors = as.integer(n_neighbors),
+                              seed = as.integer(seed))
+  knn_umap = as.data.frame(knn_umap)
+  colnames(knn_umap) = c("umap_1","umap_2")
+  rownames(knn_umap) = rownames(adj)
+
+  return(knn_umap)
+}
+
+#' @title mds_from_knn
+#' @description Compute MDS Embedding from a kNN Graph
+#' @details
+#'
+#' Computes a multi-dimensional scaling (MDS) embedding from a filtered adjacency matrix representing a kNN graph.
+#' Requires a Python-based backend function (e.g., `mds_from_knn_py()`) to perform the embedding.
+#'
+#' @param adj A sparse adjacency matrix (class `dgCMatrix`) representing a kNN graph.
+#' @param n_components Integer. Number of MDS dimensions to return (default: 15).
+#'
+#' @return A data frame of size (nodes × `n_components`) with column names `mds_1`, `mds_2`, ..., and rownames from `adj`.
+#'
+#' @export
+mds_from_knn = function(adj,n_components = 15){
+  adj = filter_network(adj,n_neighbors = 5)
+
+  knn_mds = mds_from_knn_py(adj,
+                            n_components = as.integer(n_components))
+  knn_mds = as.data.frame(knn_mds)
+  colnames(knn_mds) = paste("mds",1:ncol(knn_mds),sep = "_")
+  rownames(knn_mds) = rownames(adj)
+
+  return(knn_mds)
+}

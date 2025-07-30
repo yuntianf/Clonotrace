@@ -1,5 +1,5 @@
 ---
-title: An R Markdown document converted from "Clonotrace.ipynb"
+title: An R Markdown document converted from "./vignettes/Clonotrace.ipynb"
 output: html_document
 ---
 
@@ -11,6 +11,7 @@ options(future.globals.maxSize = 4 * 1024^3)
 library(Seurat)
 library(dplyr)
 library(ggplot2)
+library(Matrix)
 library(future)
 library(future.apply)
 ```
@@ -91,7 +92,7 @@ Then we could spread the clone label in the cell graph to smooth the cell densit
 
 ```{r}
 cell_clone = data.frame(cell = rownames(cell_meta),clone = cell_meta[,"clone"]) %>% 
-            mutate(clone = if_else(clone %in% expand_clones$clone, clone, NA_character_))
+            mutate(clone = if_else(clone %in% expanded_clones$clone, clone, NA_character_))
 ```
 
 ```{r}
@@ -140,7 +141,7 @@ deviance_umap
 Then we filter out cells with high deviance, and sparsify the cell-to-clone probablity by keeping top 90% mass
 
 ```{r}
-rownames(cell_clone_prob) = rownames(cell_meta)
+rownames(cell_clone_prob_raw) = rownames(cell_meta)
 ```
 
 ```{r}
@@ -388,6 +389,13 @@ colnames(clone_embedding) = paste("mds",1:ncol(clone_embedding),sep = "_")
 rownames(clone_embedding) = rownames(clone_cluster)
 ```
 
+This step is kind slow, here we also read a pre-computed MDS embedding for the downstream analysis:
+
+```{r}
+file_path <- system.file("extdata", "clone_mds.tsv", package = "Clonotrace")
+clone_embedding = read.table(file_path,sep = "\t",header = TRUE)
+```
+
 Here we choose the cell cluster 0 as the starting cluster for diffusion pseudotime. The `clone_dpt` function would automatically choose the clone which has the highest enrichment in this starting cluster to be the root of diffusion pseudotime.
 
 ```{r}
@@ -454,12 +462,17 @@ This function `cell_clone_coembed` would return a sparse distance matrix, which 
 
 ```{r}
 # set you python path
+library(reticulate)
 use_python("~/softwares/anaconda3/envs/py3.8/bin/python")
 ```
 
 ```{r}
 script_path <- system.file("py", "embedding_from_kNN.py", package = "Clonotrace")
-source_python("../py/embedding_from_kNN.py")
+source_python(script_path)
+```
+
+```{r}
+source_python(script_path)
 ```
 
 ```{r}
@@ -601,7 +614,7 @@ scale_color_viridis_c(name = "",option = "plasma")+
 theme(axis.text = element_blank(),    # Remove axis numbers (labels)
       axis.ticks = element_blank(),
       plot.title = element_text(hjust = 0.5),
-      legend.position = "bottom")+
+      legend.position = "right")+
 ggtitle(example_gene)+
 xlab("UMAP 1")+ylab("UMAP 2")
 feature_scatter

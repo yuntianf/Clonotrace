@@ -46,7 +46,7 @@ clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
   else{
     args <- list(...)
     if(exact == TRUE){
-      ot_args <- c("cores", "cache")
+      ot_args <- c("cores", "cache","verbose")
       call_args <- args[names(args) %in% ot_args]
       dis_result <- do.call(graph_clone_ot, c(list(graph = cell_graph, cell_clone_prob = cell_clone_prob), call_args))
     }
@@ -155,7 +155,7 @@ clone_partition <- function(clone_matrix, k = 10, similarity_threshold = 0) {
 #' @importFrom igraph distances
 #'
 #' @export
-graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 5000){
+graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 5000,verbose = TRUE){
   if(is.null(target_clone)){
     target_clone = 1:ncol(cell_clone_prob)
   }
@@ -170,9 +170,16 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
 
   target_id = which((colSums(target_clone_ident) == max(colSums(target_clone_ident))))[1]
   while(sum(flag) < length(target_clone)){
+    if(verbose){
+      cat("Start to process the clone ",target_id,".\n")
+    }
     flag[target_id] = 1
 
     global_id = target_clone[target_id]
+    if(global_id == ncol(cell_clone_prob)){
+      next
+    }
+
     cell_id = which(cell_clone_prob[,global_id] > 0)
 
     if(length(cell_id) > cache){
@@ -237,12 +244,12 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
 #' @importFrom future.apply future_lapply
 #'
 #' @export
-graph_clone_ot = function(graph,cell_clone_prob,cache = 5000,cores = 1){
+graph_clone_ot = function(graph,cell_clone_prob,cache = 5000,cores = 1,verbose = TRUE){
   partition = clone_partition(cell_clone_prob,k = cores)
   partition = lapply(partition,function(x) return(match(x,colnames(cell_clone_prob))))
 
   dis = future_lapply(partition,function(x){
-    result = graph_clone_ot_sub(graph,cell_clone_prob,x,cache)
+    result = graph_clone_ot_sub(graph,cell_clone_prob,x,cache,verbose = verbose)
   },future.seed=TRUE)
 
   dis = do.call(rbind,dis)
