@@ -204,6 +204,14 @@ After we smooth the cell density for each expanded clone over the cell transcrip
 
 We provide two methods for this, the first one calculate the exact optimal transportation distance, and the second one is a faster approximation, but less accurate. You can switch the modes by the `exact` parameter in the `clone_disance` function.
 
+```{r,eval = FALSE}
+# not run
+plan(multisession, workers = 8)
+### exact OT distance
+clone_dis = clone_disance(as.matrix(pca),cell_clone_prob,outpath = "./",exact = TRUE, cores = 8)
+### nearest neighbor distance approximation
+clone_dis = clone_disance(as.matrix(pca),cell_clone_prob,outpath = "./",exact = FALSE)
+```
 
 This step is time and memory consuming, which can take hours even with the approximation. We strongly recommend to put this step in a server or cluster and run it with multiple cores. (As a reference, the approximation method takes 40 minutes to run on the HPC paralleled with 4 cores using 8 Gb RAM).
 
@@ -379,13 +387,10 @@ Obvisouly, profile 5 and 6 monopotently differentiate to monocytes and profile 3
 
 We first generate the clone level pseudotime by diffusion pseudotime in the clone embedding. Here we use the clone distance projection in the MDS space as the clone embedding.
 
-```{r}
+```{r,eval = FALSE}
 clone_mds = MASS::isoMDS(as.matrix(clone_dis), k=30)
 clone_embedding = clone_mds$points
 colnames(clone_embedding) = paste("mds",1:ncol(clone_embedding),sep = "_")
-```
-
-```{r}
 rownames(clone_embedding) = rownames(clone_cluster)
 ```
 

@@ -182,7 +182,7 @@ soft_cluster_gam_fit <- function(G, t, P, df = 5, lambda = 1e-4,test = "F") {
   ))
 }
 
-#' @title soft_cluster_gam_fit
+#' @title cluster_profile_mass
 #'
 #' @description Aggregate Profile Probabilities by Cluster
 #' @details
