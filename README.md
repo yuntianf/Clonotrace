@@ -22,7 +22,7 @@ in your python3 environment.
 
 ## Instruction
 To view the documetation and tutorial of Clonotrace, you could visit:
-
+https://yuntianf.github.io/Clonotrace/
 
 ## Citation
 
