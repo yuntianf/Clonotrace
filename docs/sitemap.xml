@@ -7,6 +7,12 @@
     <loc>/LICENSE-text.html</loc>
   </url>
   <url>
+    <loc>/articles/Clonotrace.html</loc>
+  </url>
+  <url>
+    <loc>/articles/index.html</loc>
+  </url>
+  <url>
     <loc>/authors.html</loc>
   </url>
   <url>
@@ -169,6 +175,9 @@
     <loc>/reference/mat_split.html</loc>
   </url>
   <url>
+    <loc>/reference/mds_from_knn.html</loc>
+  </url>
+  <url>
     <loc>/reference/mnn_dist.html</loc>
   </url>
   <url>
@@ -203,6 +212,9 @@
   </url>
   <url>
     <loc>/reference/top_k.html</loc>
+  </url>
+  <url>
+    <loc>/reference/umap_from_knn.html</loc>
   </url>
   <url>
     <loc>/reference/wide2long.html</loc>
