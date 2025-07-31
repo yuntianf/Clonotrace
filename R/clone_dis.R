@@ -218,7 +218,7 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
 
     pool_ident = matrix(rep(0,nrow(cell_clone_prob)),nrow = 1)
     pool_ident[,pool] = 1
-    pool_subset_dis = colSums(target_clone_ident[,!flag]) - pool_ident %*% target_clone_ident[,!flag]
+    pool_subset_dis = colSums(target_clone_ident[,!flag,drop = FALSE]) - pool_ident %*% target_clone_ident[,!flag,drop = FALSE]
     pool_subset_dis = as.numeric(pool_subset_dis)
 
     target_id = which(!flag)[which.min(pool_subset_dis)]
