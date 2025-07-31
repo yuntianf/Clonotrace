@@ -194,7 +194,7 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
     if(length(append_cells)+length(pool) > cache){
       remove_n = length(append_cells)+length(pool)-cache
 
-      cell_freq = rowSums(target_clone_ident[setdiff(pool,cell_id),!flag])
+      cell_freq = rowSums(target_clone_ident[setdiff(pool,cell_id),!flag,drop = FALSE])
 
       remove_id = which(rank(cell_freq) <= remove_n)
       pool = pool[-remove_id]
@@ -244,7 +244,9 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
 #' @importFrom future.apply future_lapply
 #'
 #' @export
-graph_clone_ot = function(graph,cell_clone_prob,cache = 5000,cores = 1,verbose = TRUE){
+graph_clone_ot = function(graph,cell_clone_prob,prob_thresh = 0.05,cache = 5000,cores = 1,verbose = TRUE){
+  cell_clone_prob[cell_clone_prob < prob_thresh] = 0
+
   partition = clone_partition(cell_clone_prob,k = cores)
   partition = lapply(partition,function(x) return(match(x,colnames(cell_clone_prob))))
 

@@ -1,5 +1,5 @@
 ---
-title: An R Markdown document converted from "./vignettes/Clonotrace.ipynb"
+title: Clonotrace tutorial 
 output: html_document
 ---
 
