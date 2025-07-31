@@ -46,7 +46,7 @@ clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
   else{
     args <- list(...)
     if(exact == TRUE){
-      ot_args <- c("cores", "cache","verbose")
+      ot_args <- c("prob_thresh","cores", "cache","verbose")
       call_args <- args[names(args) %in% ot_args]
       dis_result <- do.call(graph_clone_ot, c(list(graph = cell_graph, cell_clone_prob = cell_clone_prob), call_args))
     }
