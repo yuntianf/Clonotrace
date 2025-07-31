@@ -170,12 +170,12 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
 
   target_id = which((colSums(target_clone_ident) == max(colSums(target_clone_ident))))[1]
   while(sum(flag) < length(target_clone)){
-    if(verbose){
-      cat("Start to process the clone ",target_id,".\n")
-    }
     flag[target_id] = 1
-
     global_id = target_clone[target_id]
+    if(verbose){
+      cat("Start to process the clone ",global_id,".\n")
+    }
+
     if(global_id == ncol(cell_clone_prob)){
       next
     }
@@ -284,7 +284,8 @@ clone_2_ot = function(distance,group1_mass,group2_mass){
   group2_mass = group2_mass/sum(group2_mass)
 
   plan = transport::transport(group1_mass, group2_mass, costm = distance)
-  plan$cost = diag(distance[plan$from,plan$to])
+  # plan$cost = diag(distance[plan$from,plan$to])
+  plan$cost <- distance[cbind(plan$from, plan$to)]
 
   return(sum(plan$cost*plan$mass))
 }
