@@ -173,7 +173,7 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
     flag[target_id] = 1
     global_id = target_clone[target_id]
     if(verbose){
-      cat("Start to process the clone ",global_id,".\n")
+      cat("Start to process the clone ",global_id," on PID ", Sys.getpid(), ".\n")
     }
 
     if(global_id == ncol(cell_clone_prob)){
@@ -318,7 +318,7 @@ graph_clone_nn = function(graph,cell_clone_prob,prob_thresh = 0.1,k = 2,verbose 
 
   dis = future_lapply(1:(group_n-1),function(i){
     if(verbose){
-      cat("Starting to proceed clone ",i,"\n")
+      cat("Starting to proceed clone ",i," on PID ", Sys.getpid(),"\n")
     }
 
     from = which(cell_group_mat[,i] > 0)
