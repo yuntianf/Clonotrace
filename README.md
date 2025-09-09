@@ -29,5 +29,5 @@ https://yuntianf.github.io/Clonotrace/
 If you use Longcell for published work, please cite our manuscript:
 
 ``` r
-
+Fu Y, Mathew D, Wang M, et al. Deciphering Cell Fate and Clonal Dynamics via Integrative Single-Cell Lineage Modeling[J]. bioRxiv, 2025: 2025.09. 01.673503.
 ```
