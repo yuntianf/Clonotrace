@@ -11,7 +11,7 @@ Depends: R (>= 4.1.0)
 LazyData: true
 RoxygenNote: 7.2.1
 Remotes: LTLA/bluster
-Imports: Matrix, RANN, RSpectra, abind, dbscan, dplyr, future, future.apply, tidyr, transport, ggplot2, ggrastr, ggrepel, igraph, scatterpie, splines, stats, uwot, reticulate
+Imports: Matrix, RANN, RSpectra, abind, dbscan, dplyr, future, future.apply, tidyr, transport, ggplot2, ggrastr, ggrepel, igraph, scatterpie, splines, stats, uwot, reticulate, rhdf5
 Suggests:
     knitr,
     rmarkdown

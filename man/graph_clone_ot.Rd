@@ -4,7 +4,14 @@
 \alias{graph_clone_ot}
 \title{graph_clone_ot}
 \usage{
-graph_clone_ot(graph, cell_clone_prob, cache = 5000, cores = 1)
+graph_clone_ot(
+  graph,
+  cell_clone_prob,
+  prob_thresh = 0.05,
+  cache = 5000,
+  cores = 1,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{graph}{An `igraph` object representing the cell-cell distance graph.}
