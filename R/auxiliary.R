@@ -668,11 +668,6 @@ sparse_manupulation = function(mat,func){
 #'
 #' @return A filtered adjacency matrix containing only nodes with at least `n_neighbors` connections.
 #'
-#' @examples
-#' mat <- matrix(sample(0:1, 100, replace = TRUE, prob = c(0.9, 0.1)), nrow = 10)
-#' mat[lower.tri(mat)] <- t(mat)[lower.tri(mat)]
-#' diag(mat) <- 0
-#' filtered <- filter_network(mat, n_neighbors = 2)
 #'
 #' @export
 filter_network = function(adj,n_neighbors = 5){

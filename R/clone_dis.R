@@ -248,10 +248,16 @@ graph_clone_ot = function(graph,cell_clone_prob,prob_thresh = 0.05,cache = 5000,
 
   partition = clone_partition(cell_clone_prob,k = cores)
   partition = lapply(partition,function(x) return(match(x,colnames(cell_clone_prob))))
+  if(verbose){
+    cat("There are ",length(partition)," clone partitions\n")
+  }
 
   dis = future_lapply(1:length(partition),function(i){
     cat("Running clone partition", i, "on PID", Sys.getpid(), "\n")
     x = partition[[i]]
+    if(verbose){
+      cat("This partition includes clone",x,"\n")
+    }
     result = graph_clone_ot_sub(graph,cell_clone_prob,x,cache,verbose = verbose)
   },future.seed=TRUE)
 

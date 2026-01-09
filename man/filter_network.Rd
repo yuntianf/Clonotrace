@@ -20,10 +20,3 @@ Filter Sparse Graph to Retain Nodes with Minimum Degree
 \details{
 Iteratively removes nodes from a symmetric adjacency matrix until all remaining nodes have at least `n_neighbors` edges.
 }
-\examples{
-mat <- matrix(sample(0:1, 100, replace = TRUE, prob = c(0.9, 0.1)), nrow = 10)
-mat[lower.tri(mat)] <- t(mat)[lower.tri(mat)]
-diag(mat) <- 0
-filtered <- filter_network(mat, n_neighbors = 2)
-
-}

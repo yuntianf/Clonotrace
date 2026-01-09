@@ -35,7 +35,7 @@ leiden_embedding = function(data,k = 30,prune.snn = 0,weight = "jaccard",resolut
   snn_graph = graph_from_data_frame(snn_edge,directed = FALSE,vertices = 1:nrow(data))
 
   # cluster = cluster_leiden(dis_snn_graph,resolution = resolution)
-  cluster = igraph::cluster_louvain(dis_snn_graph,resolution = resolution)
+  cluster = igraph::cluster_louvain(snn_graph,resolution = resolution)
   # cluster = leiden::leiden(snn_graph,resolution_parameter = resolution)
 
   return(as.factor(cluster$membership))
@@ -60,12 +60,6 @@ leiden_embedding = function(data,k = 30,prune.snn = 0,weight = "jaccard",resolut
 #' @importFrom RANN nn2
 #' @importFrom Matrix sparseMatrix
 #' @importFrom igraph graph_from_adjacency_matrix cluster_leiden
-#' @examples
-#' mat <- matrix(rnorm(500), nrow = 100)
-#' clusters <- leiden_embedding_fast(mat, k = 20)
-#' table(clusters)
-#'
-#' @export
 leiden_embedding_fast <- function(data, k = 30, prune.snn = 0, weight = "jaccard", resolution = 1) {
   # 1. Compute k-nearest neighbors (Faster than dbscan::sNN)
   knn <- RANN::nn2(data, k = k + 1)  # +1 to exclude self
