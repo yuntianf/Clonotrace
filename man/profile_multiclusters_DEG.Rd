@@ -42,8 +42,3 @@ Profile-Specific Differential Expression Across Multiple Clusters
 Applies `profile_cluster_DEG()` to a set of clusters to identify genes associated with a specific profile
 across the transcriptional landscape. Skips clusters where the profile mass is below a threshold.
 }
-\examples{
-res_list <- profile_multiclusters_DEG("P1", exprs, cell_meta, cell_profile_prob)
-names(res_list)
-
-}

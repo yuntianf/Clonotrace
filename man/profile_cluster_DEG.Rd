@@ -33,9 +33,12 @@ profile_cluster_DEG(
 \item{permute_n}{Integer. Number of permutations for null model generation (default: 50).}
 }
 \value{
-A list containing:\n
-\item{stat}{Data frame with statistics, empirical p-values, and FDR-adjusted p-values}\n
-\item{cell}{Character vector of cell IDs used in the test}\n
+A list containing:
+
+\item{stat}{Data frame with statistics, empirical p-values, and FDR-adjusted p-values}
+
+\item{cell}{Character vector of cell IDs used in the test}
+
 \item{design_null, design_full, coef, df}{Model components from GAM fitting}
 }
 \description{
@@ -45,10 +48,4 @@ Differential Expression Between Profile and Background in a Single Cluster
 Performs pseudotime-aware differential expression testing between a target profile and control background
 within a specific transcriptional cluster. Combines soft cluster-weighted regression with permutation-derived
 null distributions to assess gene-level significance.
-}
-\examples{
-# Assuming cell_meta, exprs, and cell_profile_prob are defined
-res <- profile_cluster_DEG("P1", cluster = "C2", exprs, cell_meta, cell_profile_prob)
-head(res$stat)
-
 }

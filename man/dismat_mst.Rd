@@ -19,9 +19,3 @@ Compute the Minimum Spanning Tree (MST) from a Distance Matrix
 Converts a full square distance matrix into a graph and computes the minimum spanning tree.
 Returns the MST edges as a long-format data frame.
 }
-\examples{
-dist_mat <- as.matrix(dist(matrix(rnorm(25), ncol = 5)))
-mst_edges <- dismat_mst(dist_mat)
-print(mst_edges)
-
-}

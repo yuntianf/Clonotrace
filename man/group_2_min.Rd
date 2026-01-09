@@ -27,8 +27,3 @@ This is useful for comparing cell groups or clone sets using a local-neighborhoo
 If the submatrix between `group1` and `group2` has only one value, that value is returned.
 Otherwise, the function returns the mean of the average top-k distances across both rows and columns.
 }
-\examples{
-dist_mat <- matrix(runif(100), nrow = 10)
-d <- group_2_min(dist_mat, group1 = 1:3, group2 = 4:6, k = 2)
-print(d)
-}

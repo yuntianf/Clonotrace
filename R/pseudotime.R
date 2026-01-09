@@ -12,12 +12,6 @@
 #'
 #' @importFrom Matrix Diagonal tcrossprod solve
 #' @importFrom RSpectra eigs
-#' @examples
-#' mat <- matrix(runif(100), nrow = 10)
-#' mat <- mat / rowSums(mat)
-#' act <- acct(mat)
-#' print(dim(act))
-#'
 acct = function(T_mat) {
   # Step 1: Compute the dominant eigenvalue and eigenvector using RSpectra
   ev = RSpectra::eigs(T_mat, k = 1)
@@ -47,12 +41,6 @@ acct = function(T_mat) {
 #' @param start Integer. Index of the root cell for pseudotime computation.
 #'
 #' @return A numeric vector of diffusion pseudotime values for all nodes.
-#'
-#' @examples
-#' T <- matrix(runif(100), 10, 10)
-#' T <- T / rowSums(T)
-#' pt <- DPT_T(T, start = 1)
-#'
 DPT_T = function(T_mat,start){
   M = acct(T_mat)
 
@@ -75,11 +63,6 @@ DPT_T = function(T_mat,start){
 #' @return A numeric vector of pseudotime values normalized to [0, 1].
 #'
 #' @importFrom RSpectra eigs
-#' @examples
-#' T <- matrix(runif(100), 10, 10)
-#' T <- T / rowSums(T)
-#' pt <- dpt(T, root = 1)
-#'
 dpt = function(T_mat,root,k = 30){
   T_eigen = RSpectra::eigs(T_mat,k = k)
 
@@ -146,13 +129,6 @@ embedding2dpt = function(embedding,nn_k,root,dpt_k = 30){
 #' @return The name of the most enriched clone in the start cluster.
 #'
 #' @importFrom dplyr filter_at group_by_at summarise arrange
-#' @examples
-#' root_clone <- clone_root(clones = c("A", "B", "C"),
-#'                          cell_meta = cell_metadata,
-#'                          clone_col = "clone_id",
-#'                          cluster_col = "cluster",
-#'                          start_cluster = "Naive")
-#'
 clone_root = function(clones,cell_meta,clone_col,cluster_col,start_cluster){
   root = cell_meta %>% filter_at(clone_col,~. %in% clones) %>%
     group_by_at(clone_col) %>% summarise(ratio = sum(!!sym(cluster_col) == start_cluster)/n(),count = n()) %>%
@@ -179,8 +155,10 @@ clone_root = function(clones,cell_meta,clone_col,cluster_col,start_cluster){
 #' @return A numeric vector of clone-level pseudotime values.
 #'
 #' @examples
+#' \dontrun{
 #' clone_pt <- clone_dpt(clone_embedding, cell_meta, "clone", "cluster", "Naive")
 #' hist(clone_pt)
+#' }
 #'
 #' @export
 clone_dpt = function(clone_embedding,cell_meta,

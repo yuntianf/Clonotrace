@@ -26,7 +26,7 @@ Given a distance matrix, constructs a k-nearest neighbor graph as a sparse matri
 Optionally converts distances to Gaussian kernel similarities.
 }
 \examples{
-dmat <- dist(matrix(rnorm(100), ncol = 2))
+dmat <- as.matrix(dist(matrix(rnorm(100), ncol = 2)))
 knn_graph <- dist2knn(dmat, k = 5)
 print(knn_graph)
 

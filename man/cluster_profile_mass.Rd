@@ -21,12 +21,3 @@ Aggregate Profile Probabilities by Cluster
 Computes the total probability mass for each profile across a set of clusters.
 Typically used to summarize soft profile assignments (e.g., from Clonotrace) across transcriptional clusters.
 }
-\examples{
-set.seed(1)
-prob <- matrix(runif(500), nrow = 100, ncol = 5)
-prob <- prob / rowSums(prob)
-cluster <- sample(letters[1:4], 100, replace = TRUE)
-profile_mass <- cluster_profile_mass(prob, cluster)
-print(profile_mass)
-
-}

@@ -438,7 +438,7 @@ label_spreading_bootstrap_blocked <- function(
   # Build or reuse reference (normalized, aligned to 1..C)
   if (is.null(refer_h5)) {
     refer_h5 <- file.path(tmpdir, sprintf("refer_%s.h5", paste0(sample(letters, 6), collapse = "")))
-    if (verbose) message("Computing reference (exact, preindexed), then global normalize…")
+    if (verbose) message("Computing reference (exact, preindexed), then global normalize")
     label_spreading_blocked(
       adj, labs_full, label_n = C, alpha = alpha,
       max_iter = max_iter, tol = tol,

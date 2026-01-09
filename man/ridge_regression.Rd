@@ -14,8 +14,10 @@ ridge_regression(X, G, lambda = 1e-04)
 \item{lambda}{Non-negative regularization strength for ridge penalty (default: 1e-4).}
 }
 \value{
-A list with components:\n
-\item{coef}{Estimated coefficient matrix (features × genes)}\n
+A list with components:
+
+\item{coef}{Estimated coefficient matrix (features × genes)}
+
 \item{rss}{Residual sum of squares per gene}
 }
 \description{
@@ -24,11 +26,4 @@ Ridge Regression for Gene Expression Modeling
 \details{
 Performs ridge regression using a closed-form solution. Can be applied to model either a single gene (vector response)
 or multiple genes (matrix response) using a shared regularization penalty.
-}
-\examples{
-set.seed(1)
-X <- matrix(rnorm(200), nrow = 50)
-G <- matrix(rnorm(150), nrow = 50)
-fit <- ridge_regression(X, G)
-str(fit)
 }

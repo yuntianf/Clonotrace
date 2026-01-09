@@ -23,9 +23,3 @@ Compute Diffusion Pseudotime from Transition Matrix (Eigen Decomposition)
 Calculates pseudotime by spectral decomposition of a diffusion transition matrix,
 using a root cell as a reference point in the reduced diffusion space.
 }
-\examples{
-T <- matrix(runif(100), 10, 10)
-T <- T / rowSums(T)
-pt <- dpt(T, root = 1)
-
-}

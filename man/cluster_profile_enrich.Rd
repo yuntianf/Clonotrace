@@ -14,8 +14,10 @@ cluster_profile_enrich(cell_profile_prob, cluster_label, permute_n = 300)
 \item{permute_n}{Integer. Number of permutations to perform (default: 300).}
 }
 \value{
-A list with two elements:\n
-\item{prob}{Observed profile mass per cluster (same format as `cluster_profile_mass()`)}\n
+A list with two elements:
+
+\item{prob}{Observed profile mass per cluster (same format as `cluster_profile_mass()`)}
+
 \item{pval}{Matrix of empirical p-values (1-sided) indicating profile enrichment}
 }
 \description{

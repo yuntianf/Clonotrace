@@ -18,9 +18,13 @@ graph_clone_ot(
 
 \item{cell_clone_prob}{A matrix of clone membership probabilities (cells × clones).}
 
+\item{prob_thresh}{Float. The minimum weight of a cell in a clone to be preserved, otherwise it would be sparsified.}
+
 \item{cache}{Integer. Maximum number of pooled cells retained in memory during each subgraph operation (default: 5000).}
 
 \item{cores}{Integer. Number of parallel threads to use (default: 1).}
+
+\item{verbose}{Bool flag to indicate if print the intermediate log for each pair of clones.}
 }
 \value{
 A data frame with columns `group1`, `group2`, and `dis` representing OT distances between clone pairs.

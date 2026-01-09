@@ -93,9 +93,13 @@ long_symmetry = function(long,row_names_from, col_names_from){
 #'
 #' @importFrom tidyr pivot_wider
 #' @examples
-#' long_df <- data.frame(from = c("A", "B"), to = c("B", "A"), value = c(1, 2))
-#' square_mat <- long2square(long_df, row_names_from = "from", col_names_from = "to", values_from = "value")
-#' print(square_mat)
+#' \dontrun{long_df <- data.frame(from = c("A", "B"), 
+#' 				to = c("B", "A"), value = c(1, 2))
+#' square_mat <- long2square(long_df, 
+#'			row_names_from = "from", 
+#' 			col_names_from = "to", 
+#' 			values_from = "value")
+#' print(square_mat)}
 #'
 #' @export
 long2square = function(long, row_names_from, col_names_from, values_from,
@@ -225,10 +229,6 @@ wide2long = function(mat){
 #'
 #' @importFrom dbscan dbscan
 #' @importFrom dplyr arrange
-#' @examples
-#' link_df <- data.frame(i = c("A", "B", "C"), j = c("B", "C", "A"))
-#' clusters <- link2cluster(link_df, nodes = c("A", "B", "C"))
-#' print(clusters)
 #'
 link2cluster = function(link,nodes){
   link$flag = 1
@@ -385,10 +385,6 @@ combn_dedup = function(combn){
 #'
 #' @importFrom igraph graph_from_data_frame mst simplify as_long_data_frame V
 #' @importFrom dplyr select mutate filter
-#' @examples
-#' dist_mat <- as.matrix(dist(matrix(rnorm(25), ncol = 5)))
-#' mst_edges <- dismat_mst(dist_mat)
-#' print(mst_edges)
 #'
 dismat_mst = function(mat){
   long = wide2long(mat)
@@ -886,7 +882,7 @@ embedding2knn = function(embedding,k,mode = "connectivity",...){
 #' @return A sparse matrix representing the k-NN graph (class `dgCMatrix`).
 #'
 #' @examples
-#' dmat <- dist(matrix(rnorm(100), ncol = 2))
+#' dmat <- as.matrix(dist(matrix(rnorm(100), ncol = 2)))
 #' knn_graph <- dist2knn(dmat, k = 5)
 #' print(knn_graph)
 #'
@@ -996,12 +992,7 @@ sparse_norm = function(mat,dim = 1){
 #'
 #' @return A filtered data frame with the same columns as `x`, excluding the temporary bin column.
 #'
-#' @importFrom dplyr mutate group_by summarise filter select
-#' @examples
-#' df <- data.frame(val = runif(1000))
-#' df_filtered <- bin_filter(df, col = "val", thresh = 20)
-#' hist(df_filtered$val)
-#'
+#' @importFrom dplyr mutate group_by summarise filter select n
 #' @export
 bin_filter = function(x,col,thresh = 10,breaks = 100){
   x = as.data.frame(x)

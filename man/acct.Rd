@@ -19,10 +19,3 @@ Compute Accumulated Commute Time Matrix from Transition Matrix
 Computes the accumulated commute time (ACT) matrix from a normalized transition matrix.
 This is used as a basis for diffusion-based distances and pseudotime inference.
 }
-\examples{
-mat <- matrix(runif(100), nrow = 10)
-mat <- mat / rowSums(mat)
-act <- acct(mat)
-print(dim(act))
-
-}

@@ -23,9 +23,3 @@ Partition Clones Based on Containment Similarity With Centers From Farthest Poin
 Groups clones into `k` roughly balanced partitions based on containment similarity.
 Useful for parallelizing clone-level computations (e.g., OT) by minimizing inter-group redundancy.
 }
-\examples{
-mat <- matrix(sample(0:1, 100, replace = TRUE), nrow = 10)
-colnames(mat) <- paste0("Clone", 1:10)
-partitions <- clone_partition(mat, k = 3)
-str(partitions)
-}

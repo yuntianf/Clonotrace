@@ -17,6 +17,7 @@
 #' @return A data frame with columns `group1`, `group2`, and `dis`, representing pairwise clone distances.
 #' @importFrom  bluster makeSNNGraph
 #' @importFrom igraph edge_attr
+#' @importFrom igraph set_edge_attr
 #' @export
 clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
                          overwrite = FALSE,exact = FALSE,...){
@@ -35,7 +36,9 @@ clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
   else{
     cell_graph = makeSNNGraph(embedding,k = graph_k,type="number")
     # cell_graph = delete.edges(cell_graph, E(cell_graph)[edge_attr(cell_graph)$weight < weight])
-    edge_attr(cell_graph)$weight = exp(-edge_attr(cell_graph)$weight)
+    # edge_attr(cell_graph)$weight = exp(-edge_attr(cell_graph)$weight)
+    w <- igraph::edge_attr(cell_graph, "weight")
+    igraph::set_edge_attr(cell_graph, "weight", value = exp(-w))
     saveRDS(cell_graph,file.path(outpath,"cell_graph.rds"))
   }
 
@@ -76,14 +79,7 @@ clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
 #' @return A named list of clone ID vectors, one per partition.
 #'
 #' @importFrom Matrix colSums t
-#' @examples
-#' mat <- matrix(sample(0:1, 100, replace = TRUE), nrow = 10)
-#' colnames(mat) <- paste0("Clone", 1:10)
-#' partitions <- clone_partition(mat, k = 3)
-#' str(partitions)
 clone_partition <- function(clone_matrix, k = 10, similarity_threshold = 0) {
-  library(Matrix)
-
   bin <- clone_matrix > 0
   n_clones <- ncol(bin)
   sizes <- Matrix::colSums(bin)
@@ -149,6 +145,7 @@ clone_partition <- function(clone_matrix, k = 10, similarity_threshold = 0) {
 #' @param cell_clone_prob A matrix of clone membership probabilities (cells × clones).
 #' @param target_clone Optional. Vector of clone indices to compute pairwise OT from (default: `NULL` = all).
 #' @param cache Integer. Maximum number of pooled cells retained in memory during iteration (default: 5000).
+#' @param verbose Bool flag to indicate if print the intermediate log for each pair of clones.
 #'
 #' @return A matrix with columns: `group1`, `group2`, `dis` for each clone pair and their OT distance.
 #'
@@ -236,8 +233,10 @@ graph_clone_ot_sub = function(graph,cell_clone_prob,target_clone = NULL,cache = 
 #'
 #' @param graph An `igraph` object representing the cell-cell distance graph.
 #' @param cell_clone_prob A matrix of clone membership probabilities (cells × clones).
+#' @param prob_thresh Float. The minimum weight of a cell in a clone to be preserved, otherwise it would be sparsified.
 #' @param cache Integer. Maximum number of pooled cells retained in memory during each subgraph operation (default: 5000).
 #' @param cores Integer. Number of parallel threads to use (default: 1).
+#' @param verbose Bool flag to indicate if print the intermediate log for each pair of clones.
 #'
 #' @return A data frame with columns `group1`, `group2`, and `dis` representing OT distances between clone pairs.
 #'
@@ -252,7 +251,7 @@ graph_clone_ot = function(graph,cell_clone_prob,prob_thresh = 0.05,cache = 5000,
 
   dis = future_lapply(1:length(partition),function(i){
     cat("Running clone partition", i, "on PID", Sys.getpid(), "\n")
-    x = partition
+    x = partition[[i]]
     result = graph_clone_ot_sub(graph,cell_clone_prob,x,cache,verbose = verbose)
   },future.seed=TRUE)
 
@@ -302,7 +301,7 @@ clone_2_ot = function(distance,group1_mass,group2_mass){
 #' @param graph An `igraph` object representing the cell-cell distance graph.
 #' @param cell_clone_prob A numeric matrix of clone membership probabilities (cells × clones).
 #' @param prob_thresh Threshold for binarizing clone assignment probabilities (default: 0.1).
-#' @param nn_k Integer. Number of nearest neighbors to select for each clone comparison (default: 2).
+#' @param k Integer. Number of nearest neighbors to select for each clone comparison (default: 2).
 #' @param verbose Logical. Whether to print progress during processing (default: FALSE).
 #'
 #' @return A data frame with columns `group1`, `group2`, and `dis` indicating the NN distance between clones.
@@ -365,10 +364,7 @@ graph_clone_nn = function(graph,cell_clone_prob,prob_thresh = 0.1,k = 2,verbose 
 #' @param k Integer. Number of nearest neighbors to average over (default: 3).
 #'
 #' @return A single numeric value representing the symmetric average distance between the two groups.
-#' @examples
-#' dist_mat <- matrix(runif(100), nrow = 10)
-#' d <- group_2_min(dist_mat, group1 = 1:3, group2 = 4:6, k = 2)
-#' print(d)
+
 group_2_min = function(distance,group1,group2, k = 3){
   sub_dis = distance[group1,group2]
   if(is.null(nrow(sub_dis))){

@@ -1,6 +1,3 @@
-
-
-
 #' @title connectivity_coord
 #' @description Convert Connectivity Matrix into Edge Coordinates for Plotting
 #' @details

@@ -39,7 +39,9 @@ Compute Clone-Level Diffusion Pseudotime
 Estimates pseudotime on the clone embedding by building a kNN graph and applying diffusion pseudotime from a root clone.
 }
 \examples{
+\dontrun{
 clone_pt <- clone_dpt(clone_embedding, cell_meta, "clone", "cluster", "Naive")
 hist(clone_pt)
+}
 
 }

@@ -26,13 +26,3 @@ Computes a null distribution of p-values for profile-based differential gene exp
 by repeatedly permuting the soft profile assignment matrix. This supports empirical
 calibration of DE gene significance in pseudotime analysis.
 }
-\examples{
-# Simulated example
-G <- matrix(rnorm(5000), nrow = 100)
-P <- matrix(runif(200), nrow = 100)
-P <- cbind(target = P[, 1], control = 1 - P[, 1])
-dpt <- seq(0, 1, length.out = 100)
-null_pvals <- profile_cluster_DEG_permute(P, G, dpt, n = 10)
-length(null_pvals)
-
-}

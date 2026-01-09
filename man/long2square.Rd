@@ -40,8 +40,12 @@ Converts a long-format data frame (pairwise relationships) into a square numeric
 Optionally enforces symmetry and fills missing values.
 }
 \examples{
-long_df <- data.frame(from = c("A", "B"), to = c("B", "A"), value = c(1, 2))
-square_mat <- long2square(long_df, row_names_from = "from", col_names_from = "to", values_from = "value")
-print(square_mat)
+\dontrun{long_df <- data.frame(from = c("A", "B"), 
+				to = c("B", "A"), value = c(1, 2))
+square_mat <- long2square(long_df, 
+		row_names_from = "from", 
+			col_names_from = "to", 
+			values_from = "value")
+print(square_mat)}
 
 }

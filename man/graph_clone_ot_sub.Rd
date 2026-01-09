@@ -20,6 +20,8 @@ graph_clone_ot_sub(
 \item{target_clone}{Optional. Vector of clone indices to compute pairwise OT from (default: `NULL` = all).}
 
 \item{cache}{Integer. Maximum number of pooled cells retained in memory during iteration (default: 5000).}
+
+\item{verbose}{Bool flag to indicate if print the intermediate log for each pair of clones.}
 }
 \value{
 A matrix with columns: `group1`, `group2`, `dis` for each clone pair and their OT distance.

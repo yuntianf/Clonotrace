@@ -25,11 +25,3 @@ Filter Cells by Profile Mass within Pseudotime Bins
 Applies a binning strategy over pseudotime and retains only bins where both target and control profile mass
 exceed a given threshold. Useful for identifying regions of sufficient information for differential analysis.
 }
-\examples{
-set.seed(1)
-mass <- cbind(target = runif(100), control = runif(100))
-time <- sort(runif(100))
-valid_cells <- bin_filter_profile_mass(mass, time, thresh = 3)
-sum(valid_cells)
-
-}

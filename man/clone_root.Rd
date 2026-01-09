@@ -26,11 +26,3 @@ Identify Root Clone from Cluster Enrichment
 \details{
 Finds the most enriched clone in a given starting cluster, to use as a pseudotime root.
 }
-\examples{
-root_clone <- clone_root(clones = c("A", "B", "C"),
-                         cell_meta = cell_metadata,
-                         clone_col = "clone_id",
-                         cluster_col = "cluster",
-                         start_cluster = "Naive")
-
-}

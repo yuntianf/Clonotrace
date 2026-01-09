@@ -20,11 +20,16 @@ soft_cluster_gam_fit(G, t, P, df = 5, lambda = 1e-04, test = "F")
 \item{test}{Statistical test to use for model comparison: `"F"` (default) or `"LRT"` (likelihood ratio test).}
 }
 \value{
-A list with components:\n
-\item{stat}{A data frame with test statistic, p-value, mean expression difference, and Cohen's d for each gene}\n
-\item{df}{Degrees of freedom used for test}\n
-\item{coef}{Fitted coefficients from the full model}\n
-\item{design_null}{Design matrix for the null model}\n
+A list with components:
+
+\item{stat}{A data frame with test statistic, p-value, mean expression difference, and Cohen's d for each gene}
+
+\item{df}{Degrees of freedom used for test}
+
+\item{coef}{Fitted coefficients from the full model}
+
+\item{design_null}{Design matrix for the null model}
+
 \item{design_full}{Design matrix for the full model}
 }
 \description{

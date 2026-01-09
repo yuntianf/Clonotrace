@@ -15,12 +15,6 @@
 #' @return A logical vector indicating which rows (cells) fall into retained pseudotime bins.
 #'
 #' @importFrom dplyr mutate group_by summarise filter
-#' @examples
-#' set.seed(1)
-#' mass <- cbind(target = runif(100), control = runif(100))
-#' time <- sort(runif(100))
-#' valid_cells <- bin_filter_profile_mass(mass, time, thresh = 3)
-#' sum(valid_cells)
 #'
 #' @export
 bin_filter_profile_mass = function(mass,time,thresh = 5, binsize = 0.005){
@@ -53,16 +47,12 @@ bin_filter_profile_mass = function(mass,time,thresh = 5, binsize = 0.005){
 #' @param G A numeric response matrix or vector. Must match number of rows in `X` (cells × genes or 1).
 #' @param lambda Non-negative regularization strength for ridge penalty (default: 1e-4).
 #'
-#' @return A list with components:\n
-#' \item{coef}{Estimated coefficient matrix (features × genes)}\n
+#' @return A list with components:
+#'
+#' \item{coef}{Estimated coefficient matrix (features × genes)}
+#'
 #' \item{rss}{Residual sum of squares per gene}
 #'
-#' @examples
-#' set.seed(1)
-#' X <- matrix(rnorm(200), nrow = 50)
-#' G <- matrix(rnorm(150), nrow = 50)
-#' fit <- ridge_regression(X, G)
-#' str(fit)
 ridge_regression = function(X,G,lambda = 1e-4){
   # X: design matrix: cell by dimension
   # G: cell by gene matrix or a gene expression vector
@@ -92,11 +82,16 @@ ridge_regression = function(X,G,lambda = 1e-4){
 #' @param lambda Ridge regularization strength (default: 1e-4).
 #' @param test Statistical test to use for model comparison: `"F"` (default) or `"LRT"` (likelihood ratio test).
 #'
-#' @return A list with components:\n
-#' \item{stat}{A data frame with test statistic, p-value, mean expression difference, and Cohen's d for each gene}\n
-#' \item{df}{Degrees of freedom used for test}\n
-#' \item{coef}{Fitted coefficients from the full model}\n
-#' \item{design_null}{Design matrix for the null model}\n
+#' @return A list with components:
+#'
+#' \item{stat}{A data frame with test statistic, p-value, mean expression difference, and Cohen's d for each gene}
+#'
+#' \item{df}{Degrees of freedom used for test}
+#'
+#' \item{coef}{Fitted coefficients from the full model}
+#'
+#' \item{design_null}{Design matrix for the null model}
+#'
 #' \item{design_full}{Design matrix for the full model}
 #'
 #' @importFrom splines ns
@@ -196,13 +191,6 @@ soft_cluster_gam_fit <- function(G, t, P, df = 5, lambda = 1e-4,test = "F") {
 #' @return A numeric matrix where rows represent clusters and columns represent profile sums.
 #'
 #' @importFrom dplyr group_by summarise across
-#' @examples
-#' set.seed(1)
-#' prob <- matrix(runif(500), nrow = 100, ncol = 5)
-#' prob <- prob / rowSums(prob)
-#' cluster <- sample(letters[1:4], 100, replace = TRUE)
-#' profile_mass <- cluster_profile_mass(prob, cluster)
-#' print(profile_mass)
 #'
 cluster_profile_mass <- function(cell_profile_prob, cluster_label) {
   # Convert input to a dataframe if it isn't already
@@ -236,8 +224,10 @@ cluster_profile_mass <- function(cell_profile_prob, cluster_label) {
 #' @param cluster_label A vector of cluster identities (length = number of rows in `cell_profile_prob`).
 #' @param permute_n Integer. Number of permutations to perform (default: 300).
 #'
-#' @return A list with two elements:\n
-#' \item{prob}{Observed profile mass per cluster (same format as `cluster_profile_mass()`)}\n
+#' @return A list with two elements:
+#'
+#' \item{prob}{Observed profile mass per cluster (same format as `cluster_profile_mass()`)}
+#'
 #' \item{pval}{Matrix of empirical p-values (1-sided) indicating profile enrichment}
 #'
 #' @importFrom abind abind
@@ -291,14 +281,6 @@ cluster_profile_enrich = function(cell_profile_prob,cluster_label,permute_n = 30
 #'
 #' @return A list of p-value vectors (one per permutation) representing the null distribution.
 #'
-#' @examples
-#' # Simulated example
-#' G <- matrix(rnorm(5000), nrow = 100)
-#' P <- matrix(runif(200), nrow = 100)
-#' P <- cbind(target = P[, 1], control = 1 - P[, 1])
-#' dpt <- seq(0, 1, length.out = 100)
-#' null_pvals <- profile_cluster_DEG_permute(P, G, dpt, n = 10)
-#' length(null_pvals)
 #'
 profile_cluster_DEG_permute = function(P, G, dpt, n = 50){
   null_p = lapply(1:n,function(i){
@@ -334,17 +316,16 @@ profile_cluster_DEG_permute = function(P, G, dpt, n = 50){
 #' @param pseudotime_col Name of the column in `cell_meta` representing pseudotime (default: `"cell_t"`).
 #' @param permute_n Integer. Number of permutations for null model generation (default: 50).
 #'
-#' @return A list containing:\n
-#' \item{stat}{Data frame with statistics, empirical p-values, and FDR-adjusted p-values}\n
-#' \item{cell}{Character vector of cell IDs used in the test}\n
+#' @return A list containing:
+#'
+#' \item{stat}{Data frame with statistics, empirical p-values, and FDR-adjusted p-values}
+#'
+#' \item{cell}{Character vector of cell IDs used in the test}
+#'
 #' \item{design_null, design_full, coef, df}{Model components from GAM fitting}
 #'
 #' @importFrom dplyr filter_at mutate
 #' @importFrom stats p.adjust
-#' @examples
-#' # Assuming cell_meta, exprs, and cell_profile_prob are defined
-#' res <- profile_cluster_DEG("P1", cluster = "C2", exprs, cell_meta, cell_profile_prob)
-#' head(res$stat)
 #'
 #' @export
 profile_cluster_DEG = function(profile,cluster,exprs,cell_meta,cell_profile_prob,
@@ -404,9 +385,6 @@ profile_cluster_DEG = function(profile,cluster,exprs,cell_meta,cell_profile_prob
 #' @return A named list of DE test results, one for each qualifying cluster.
 #'
 #' @importFrom future.apply future_lapply
-#' @examples
-#' res_list <- profile_multiclusters_DEG("P1", exprs, cell_meta, cell_profile_prob)
-#' names(res_list)
 #'
 #' @export
 profile_multiclusters_DEG = function(profile,exprs,cell_meta,cell_profile_prob,clusters = NULL,

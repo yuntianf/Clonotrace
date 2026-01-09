@@ -25,9 +25,3 @@ Iterative Binning Filter to Remove Sparse Bins
 Filters rows from a data frame such that each bin of a numeric column contains at least `thresh` observations.
 Binning is performed using `cut()` over a specified number of breaks. The process repeats until all bins meet the threshold.
 }
-\examples{
-df <- data.frame(val = runif(1000))
-df_filtered <- bin_filter(df, col = "val", thresh = 20)
-hist(df_filtered$val)
-
-}

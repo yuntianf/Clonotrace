@@ -19,9 +19,9 @@ graph_clone_nn(
 
 \item{prob_thresh}{Threshold for binarizing clone assignment probabilities (default: 0.1).}
 
-\item{verbose}{Logical. Whether to print progress during processing (default: FALSE).}
+\item{k}{Integer. Number of nearest neighbors to select for each clone comparison (default: 2).}
 
-\item{nn_k}{Integer. Number of nearest neighbors to select for each clone comparison (default: 2).}
+\item{verbose}{Logical. Whether to print progress during processing (default: FALSE).}
 }
 \value{
 A data frame with columns `group1`, `group2`, and `dis` indicating the NN distance between clones.

@@ -20,9 +20,3 @@ Compute Diffusion Pseudotime from Accumulated Commute Time Matrix
 \details{
 Computes diffusion pseudotime (DPT) distances from a specified root node using the accumulated commute time matrix.
 }
-\examples{
-T <- matrix(runif(100), 10, 10)
-T <- T / rowSums(T)
-pt <- DPT_T(T, start = 1)
-
-}

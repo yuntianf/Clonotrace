@@ -21,9 +21,3 @@ Cluster Nodes Based on Link Connectivity
 Given a set of links between node pairs and a list of all nodes, this function constructs a symmetric adjacency matrix,
 applies diffusion to expand connectivity, and clusters the result using DBSCAN.
 }
-\examples{
-link_df <- data.frame(i = c("A", "B", "C"), j = c("B", "C", "A"))
-clusters <- link2cluster(link_df, nodes = c("A", "B", "C"))
-print(clusters)
-
-}
