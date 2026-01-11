@@ -5,7 +5,7 @@ Version: 1.1.0
 Author: Yuntian Fu
 Maintainer: Yuntian Fu <yuntianf@pennmedicine.upenn.edu>
 Description: Clonotrace is a tool for multimodal analysis of single-cell RNA-seq data with lineage information, including lineage-barcoded cells and immune cells.
-License: MIT
+License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
 LazyData: true

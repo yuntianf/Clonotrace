@@ -83,6 +83,9 @@ leiden_embedding_fast <- function(data, k = 30, prune.snn = 0, weight = "jaccard
 
   # 3. Prune edges below threshold
   jaccard[jaccard <= prune.snn] <- 0
+  diag(jaccard) <- 0
+  jaccard <- Matrix::drop0(jaccard)
+  jaccard <- as(jaccard, "dgCMatrix")
 
   # 4. Convert to igraph (weighted)
   snn_graph <- igraph::graph_from_adjacency_matrix(

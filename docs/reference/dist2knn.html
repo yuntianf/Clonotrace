@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">Clonotrace</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,11 +80,419 @@ Optionally converts distances to Gaussian kernel similarities.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">dmat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">dmat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">knn_graph</span> <span class="op">&lt;-</span> <span class="fu">dist2knn</span><span class="op">(</span><span class="va">dmat</span>, k <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in 1:nrow(embedding):</span> argument of length 0</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">knn_graph</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'x' in selecting a method for function 'print': object 'knn_graph' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50 x 50 sparse Matrix of class "dgCMatrix"</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   [[ suppressing 50 column names ‘1’, ‘2’, ‘3’ ... ]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  .         .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  .         .         .         .         0.9447808 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  .         .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  .         .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  .         0.9778948 .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  .         .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  .         .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  .         .         .         .         .         0.9948577 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  .         .         0.9721113 .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 .         .         .         .         .         .         0.99672166</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 .         0.9868492 .         .         0.9880065 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 .         .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 0.9572865 .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 .         0.9663814 0.8716244 .         0.9226014 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 .         .         .         .         0.9774181 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 .         .         0.9277302 .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 0.9864096 .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 .         .         .         .         .         0.9983505 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 .         .         .         .         .         0.9820368 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 .         .         .         0.9561349 .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 .         .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 .         .         .         .         .         0.9944713 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 .         .         .         .         .         0.9945508 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 .         .         .         .         .         .         0.99614669</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 .         .         0.8693863 .         .         .         0.93674951</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 .         0.9664864 .         .         0.9799138 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 0.8255224 .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 0.8836063 .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 .         .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 .         .         .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 .         0.9535985 0.8910205 .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 .         .         .         .         .         .         0.99871879</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 .         .         .         .         0.9840382 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 .         .         .         0.9867814 .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 .         .         .         .         .         .         0.98147061</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 .         .         .         .         .         0.8702960 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 .         .         .         .         .         .         0.03669927</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 .         .         .         .         0.9966517 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 .         0.0761361 .         .         .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 .         .         .         .         .         .         0.99554770</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 .         .         .         .         .         .         0.99552979</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 .         .         .         .         .         0.8342440 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 .         .         .         .         .         .         0.99619040</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 .         .         .         0.9531436 .         .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 .         .         .         0.9717983 0.9926795 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46 0.8724713 .         .         .         .         0.9853903 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47 .         .         .         .         .         .         0.81602721</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48 .         .         .         .         .         0.9691716 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49 .         .         .         .         0.9990673 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50 .         .         .         0.9718912 0.9914367 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  .         .         .         .         .          0.9710713 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  .         .         .         0.9637534 .          .         0.96361122</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  .         0.9082020 .         .         .          .         0.81111612</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  .         .         .         0.9868448 .          .         0.96622080</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  0.9934541 .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  .         .         0.9875467 .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  .         .         .         0.9834289 .          .         0.99233221</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 .         0.9855943 .         .         .          .         0.99470154</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 .         0.9829492 .         0.9864242 .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 .         0.9709325 .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 .         .         .         .         0.61589194 0.9330747 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 0.9866388 .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 0.9950488 .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 .         .         0.9975690 .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 0.9856245 .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 0.9959449 .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 .         .         0.9998094 .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 .         .         .         .         0.62167203 0.6702531 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 .         .         .         .         .          0.9253069 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 .         .         .         .         0.01832142 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 .         .         .         .         .          0.6159359 .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 .         0.9879487 .         0.9765233 .          .         0.99840493</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 .         .         0.9976383 .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 .         .         .         .         0.68304562 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 .         .         .         .         .          .         0.02656472</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 .         .         0.9940278 .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 .         .         .         .         0.79806582 .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 .         .         0.9938639 .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46 0.9564152 .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50 .         .         .         .         .          .         .         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  .          .         0.9915940 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  .          0.8578123 .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  .          .         .         .         .         0.9420497 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  0.98547404 .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  .          .         .         0.9981089 0.9827215 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  .          .         .         0.9879654 0.9962604 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  .          0.9824396 .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 .          .         .         .         .         .         0.9988901</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 .          .         0.3330548 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 .          .         0.9384306 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 .          .         .         .         .         .         0.9570560</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 .          0.9794832 .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 .          .         .         0.9931588 .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 .          .         .         0.9886428 0.9840871 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 .          .         .         .         .         .         0.9983596</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 .          0.9774971 .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 0.99983630 .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 .          .         0.9195375 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 .          .         0.8148293 .         .         0.9188079 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 .          .         .         .         .         0.8260692 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 .          0.9185971 .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 .          .         .         .         .         .         0.9907874</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 .          .         .         .         0.9851270 .         0.9877223</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 .          .         .         .         .         0.9745958 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 .          .         .         0.8963616 .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 0.99718916 .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 0.02809465 .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 .          0.9896192 .         .         .         .         0.9904987</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 .          .         .         0.8906575 .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 .          0.9870794 .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 .          .         .         .         .         0.9986875 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 0.99011623 .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46 .          .         0.8472849 0.9920040 .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48 .          .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49 0.99832333 .         .         .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50 .          .         .         .         0.9856542 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  .         .         .         .          .          9.389963e-01 0.9189894</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  .         .         .         .          0.94543483 .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  .         .         .         0.82546293 .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  .         .         .         .          0.98694251 .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  0.9941616 0.9934851 .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  .         .         0.9862026 0.96462774 .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  0.9880662 0.9961917 .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 .         .         0.9998203 .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 .         .         .         .          .          5.633945e-01 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 .         .         .         .          .          8.225766e-01 0.9242150</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 .         .         .         .          0.99983448 .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 .         .         .         0.98486047 .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 .         .         .         .          .          9.563440e-01 0.7972267</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 0.9936966 0.9881546 .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 .         0.9802424 .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 .         .         .         .          .          .            0.9603844</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 .         .         0.9966126 .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 .         0.9954315 .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 0.9959652 .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 .         .         .         .          .          1.740322e-05 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 .         .         .         .          .          .            0.8291359</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 .         .         0.9971873 0.97890835 .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 0.9396034 .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 .         .         .         0.04423246 .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 .         .         .         .          0.99716534 .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 .         .         .         .          0.02980416 .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 .         .         .         0.99578416 .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 0.8567423 .         .         .          .          7.499336e-01 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 .         .         0.9912722 0.99462237 .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 .         .         .         .          .          .            0.9409335</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 .         .         .         .          0.98980375 .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46 0.9565398 0.9452347 .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48 0.9900096 0.9875969 .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49 .         .         .         .          0.99855274 .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50 .         .         .         .          .          .            .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  .          .         0.95072426 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  .          .         0.84155880 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  .          .         .          .         .         0.9882030 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  .          .         .          .         0.9848813 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  .          .         .          0.9977285 .         .         0.9861861</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  .          .         0.99468970 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 .          .         .          0.9989016 .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 .          .         0.99098149 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 0.32639067 .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 .          0.7331781 .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 .          .         0.99843494 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 .          .         0.93980417 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 .          .         .          .         0.9849766 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 .          0.9440834 .          .         .         0.9829043 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 .          .         .          0.9906155 0.9903957 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 .          .         .          0.9986126 .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 .          .         .          0.9336966 .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 0.07874791 .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 .          0.8885159 .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 .          .         .          .         .         0.6351344 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 .          .         .          .         .         .         0.9846702</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 .          0.8154735 .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 .          .         .          0.9638262 .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 0.19634159 .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 .          .         .          .         .         .         0.1158255</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 .          .         .          .         .         0.9758323 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 .          .         0.02593633 .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 .          .         .          0.9865924 .         .         0.9967530</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 .          .         .          0.9958086 .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 0.20976200 .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 .          .         .          0.9962396 .         .         0.9860758</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 .          0.9267988 .          .         .         0.9843409 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 .          .         .          .         0.9823853 0.9666454 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47 0.03650417 .         .          0.7640006 .         .         0.8924418</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49 .          .         .          .         .         .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50 .          .         .          .         0.9930232 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  .            .         .         0.6693331 .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  .            .         0.9940045 .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  9.674591e-01 .         .         .         .          .         9.596028e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  .            0.7264230 .         .         0.99591586 0.9899781 .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 .            .         .         .         .          0.9964774 .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 5.087046e-01 .         .         .         .          .         6.824000e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 .            .         .         0.5934399 .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 .            .         0.9921529 0.7102850 .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 .            .         .         .         .          0.9718735 .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 9.775330e-01 .         .         .         .          .         9.772836e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 .            .         .         .         .          0.9877486 .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 9.860522e-01 .         .         .         .          .         9.672395e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 .            0.5786016 .         .         .          0.9829149 .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 .            .         0.9921733 0.7169643 .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 .            .         .         .         .          .         6.677177e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 3.326894e-05 .         .         .         .          .         7.855358e-05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 .            .         .         0.5854676 .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 .            .         .         .         0.99304499 0.9946905 .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 .            .         0.9092947 .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 .            0.7555532 .         .         0.99599741 .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 .            .         .         .         .          .         9.363078e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 .            .         .         .         0.06896384 .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 .            0.7542878 .         .         .          0.9783486 .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 .            .         .         .         0.99111023 .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 9.334412e-01 .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 .            .         .         .         0.99185303 0.9999372 .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 .            .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 .            .         0.9988262 .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46 .            .         .         .         .          .         9.336131e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47 .            0.2995258 .         .         0.87690776 .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48 9.739616e-01 .         .         .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49 .            .         0.9995393 .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50 .            .         0.9932791 .         .          .         .           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  .         .         .         0.8746960 .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  .         0.9437748 0.9411739 .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  .         .         0.9919775 .         .            .         0.9972765</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  .         .         .         0.9928930 .            0.9755713 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  0.9920804 .         .         .         9.548332e-01 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  .         .         .         0.9831896 .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 0.9966459 .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 .         .         0.9831460 .         .            .         0.9923734</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 0.9675921 .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 .         .         .         0.7682725 .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 .         .         .         0.9966126 .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 .         0.9988108 .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 .         .         .         0.9798189 .            0.9925197 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 .         .         .         0.9774403 .            0.9917932 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 0.9949385 .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 0.9798267 .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 .         .         0.9828048 .         .            .         0.9934865</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 .         0.8908667 .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 .         .         .         .         6.195610e-07 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 .         0.7955485 .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 0.9955852 .         .         .         9.660886e-01 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 .         .         0.9796325 .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 .         0.9788856 0.9225478 .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 0.9614867 .         .         .         9.658151e-01 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 .         .         .         .         .            0.9162138 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 .         .         .         .         5.878340e-02 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 .         .         0.9992821 .         .            .         0.9992491</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 0.9815912 .         .         .         9.679655e-01 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 0.9999418 .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 .         .         .         0.8638906 .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 .         .         .         .         .            .         0.9959575</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46 .         .         .         .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47 .         .         .         .         .            0.8531937 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48 .         .         .         .         9.678919e-01 .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49 .         .         0.9984818 .         .            .         .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50 .         .         0.9971634 .         .            .         0.9902929</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.9397433</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  0.9903498</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 0.9827663</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 0.9916966</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 0.9957682</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 0.9970826</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48 .        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49 0.9962439</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50 .        </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

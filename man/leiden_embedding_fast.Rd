@@ -33,9 +33,3 @@ Fast Leiden Clustering Using Sparse Shared Nearest Neighbors
 Efficient implementation of SNN graph construction and Leiden clustering.
 Uses matrix algebra for fast computation of shared neighbors and Jaccard similarity.
 }
-\examples{
-mat <- matrix(rnorm(500), nrow = 100)
-clusters <- leiden_embedding_fast(mat, k = 20)
-table(clusters)
-
-}

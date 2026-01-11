@@ -1,7 +1,12 @@
 ---
-title: Clonotrace tutorial 
-output: html_document
+title: "Clonotrace"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Clonotrace}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
+
 
 ```{r}
 options(future.globals.maxSize = 4 * 1024^3)
@@ -20,9 +25,40 @@ library(future.apply)
 library(Clonotrace)
 ```
 
-### data
+## Introduction
 
-We first read in data. The demo data is from a public in vitro longitudinal experiment to monitor the hematopoiesis (https://www.science.org/doi/10.1126/science.aaw3381). You can download the demo data from: https://upenn.box.com/s/9bxv50lueelrrf5zv4ked20dlkalrtir
+Understanding clonal structure and dynamics is a central problem in single-cell transcriptomics, particularly in immune and cancer biology. Modern single-cell technologies increasingly enable joint measurement of transcriptomes and clonal barcodes (e.g., TCR sequences or genetic lineage tracers), providing an opportunity to study how transcriptional states evolve at the clone level rather than at the level of individual cells.
+
+**Clonotrace** is designed to analyze clonal behavior in single-cell data by integrating transcriptomic embeddings with clone information. Rather than treating clones as discrete labels, Clonotrace models each clone as a distribution of cells in a low-dimensional embedding space, enabling quantitative comparison of clonal transcriptional states.
+
+This vignette provides a step-by-step tutorial demonstrating how to use Clonotrace to:
+- Estimate clone-level density in a cell embedding
+- Compute clone-to-clone distances using optimal transport (OT)
+- Cluster clones into transcriptional profiles
+- Perform downstream analyses such as profile-level pseudotime and gene association
+
+---
+
+## Installation
+
+Clonotrace can be installed from GitHub:
+
+```{r,eval = FALSE}
+install.packages("devtools")
+devtools::install_github("yuntianf/Clonotrace")
+```
+
+### data
+Clonotrace requires two main inputs:
+
+A low-dimensional cell embedding, typically derived from PCA, or other dimensionality reduction methods applied to gene expression data.
+
+A cell-by-clone identity matrix, which is a binary matrix to indicate if a given cell belongs to a given clone.
+
+Throughout this vignette, we assume that the embedding has already been computed and that clone identity are available (e.g., from TCR sequence or lineage barcodes).
+
+
+We begin by loading an example dataset. The example data is from a public in vitro longitudinal experiment to monitor the hematopoiesis (https://www.science.org/doi/10.1126/science.aaw3381). You can download the demo data from: https://upenn.box.com/s/x099vybef0qop0cljbuan89x5jqvgnwx
 
 ```{r}
 seurat_object = readRDS("../../hematopoiesis.rds")
@@ -40,7 +76,7 @@ Within this data, there are 34782 cells are sampled at 3 time points.
 table(cell_meta$Time.point)
 ```
 
-This data has a simple cell type compistion with only 3 cell types:
+This data has a simple cell type composition with only 3 cell types:
 
 ```{r}
 cell_type_umap = dimplot(embedding = umap,annot = cell_meta,color_by = "Cell.type.annotation",size = 0.1,label_size = 5)+
@@ -51,7 +87,7 @@ xlab("UMAP 1")+ylab("UMAP 2")
 cell_type_umap
 ```
 
-For a higher resolustion in the downstream analysis, we further cluster cells into 9 cell clusters.
+For a higher resolution in the downstream analysis, we further cluster cells into 9 cell clusters.
 
 ```{r}
 cell_cluster_umap = dimplot(embedding = umap,annot = cell_meta,color_by = "cluster",size = 0.1,label_size = 5)+
@@ -64,7 +100,7 @@ cell_cluster_umap
 
 ### clone label spreading
 
-We first build a cell kNN graph based within the PCA space:
+We first build a cell kNN graph based on the PCA space:
 
 ```{r}
 cell_knn = embedding2knn(embedding = as.matrix(pca),k = 30,mode = "connectivity",if_self = FALSE)
@@ -88,7 +124,7 @@ ylab("clone count")
 clone_size_hist
 ```
 
-Then we could spread the clone label in the cell graph to smooth the cell density in those expanding clones. There is a bootstrap during this process to filter out propogation with high deviance, usually in regions with high density of lowly expanded or unexpanded clones. So it's better to run this in parallel.
+Then we could spread the clone label in the cell graph to smooth the cell density in those expanding clones. There is a bootstrap during this process to filter out propagations with high deviance, usually in regions with high density of lowly expanded or non-expanded clones. So it's better to run this in parallel.
 
 ```{r}
 cell_clone = data.frame(cell = rownames(cell_meta),clone = cell_meta[,"clone"]) %>% 
@@ -104,6 +140,8 @@ end = Sys.time()
 print(end-start)
 ```
 
+There are two main outputs from this step, the first one is the propagated clone labels for each cell and the second one is the deviance of each propagated label.
+
 ```{r}
 cell_clone_prob_raw = clone_labels[[1]]
 deviance = clone_labels[[2]]
@@ -112,6 +150,8 @@ deviance = clone_labels[[2]]
 ```{r}
 rownames(cell_clone_prob_raw) = rownames(cell_meta)
 ```
+
+We can first show the distribution of the deviance in a histogram:
 
 ```{r}
 deviance_hist = ggplot()+
@@ -122,7 +162,7 @@ ylab("cell count")
 deviance_hist
 ```
 
-We can visualize the deviance of clone label spreading in each cell via cell UMAP, and here we use the 0.3 as the upper bound threshold for deviance. Cells with high deviance are enriched in undifferentiated cells, which due to they haven't proliferated enough to expand their clones.
+We can visualize the deviance of clone label spreading in each cell via cell UMAP, and here we use the 0.3 as the upper bound threshold for deviance. Cells with high deviance are enriched in undifferentiated cells.
 
 ```{r}
 cell_meta$deviance = deviance
@@ -138,7 +178,7 @@ ggtitle("Cells with high deviance")
 deviance_umap
 ```
 
-Then we filter out cells with high deviance, and sparsify the cell-to-clone probablity by keeping top 90% mass
+Then we filter out cells with high deviance, and sparsify the cell-to-clone probability by keeping top 90% mass
 
 ```{r}
 rownames(cell_clone_prob_raw) = rownames(cell_meta)
@@ -165,6 +205,8 @@ We can use an example to show how the cell clone assignment is smoothed during t
 example_clone = "Lineage-1193-6"
 ```
 
+First we show the raw cell distribution of the example clone:
+
 ```{r}
 clone_example_umap_raw = dimplot(umap,annot = cell_meta %>% filter(clone == example_clone) %>% mutate(group = "1"),
                                  color_by = "group",label = FALSE,size = 2)+
@@ -175,6 +217,8 @@ theme(axis.text = element_blank(),
 
 clone_example_umap_raw
 ```
+
+And after label propagation, its cell distribution becomes more continous.
 
 ```{r}
 cell_meta$prob = NA
@@ -200,9 +244,9 @@ clone_example_umap_smooth
 
 ### Clonewise transcriptomic distance
 
-After we smooth the cell density for each expanded clone over the cell transcriptomic embedding, we can measure their cell distribution difference via optimal transportation distance. 
+After we smooth the cell density for each expanded clone over the cell transcriptomic embedding, we can measure their cell distributional difference via optimal transportation distance. 
 
-We provide two methods for this, the first one calculate the exact optimal transportation distance, and the second one is a faster approximation, but less accurate. You can switch the modes by the `exact` parameter in the `clone_disance` function.
+We provide two methods for this, the first one calculates the exact optimal transportation distance, and the second one is a faster approximation, but less accurate. You can switch the modes by the `exact` parameter in the `clone_disance` function.
 
 ```{r,eval = FALSE}
 # not run
@@ -215,11 +259,16 @@ clone_dis = clone_disance(as.matrix(pca),cell_clone_prob,outpath = "./",exact = 
 
 This step is time and memory consuming, which can take hours even with the approximation. We strongly recommend to put this step in a server or cluster and run it with multiple cores. (As a reference, the approximation method takes 40 minutes to run on the HPC paralleled with 4 cores using 8 Gb RAM).
 
-Here for time efficiency, we can use the pre-computed clone-wise distance for downstream applicaitons.
+Here for time efficiency, we can use the pre-computed clone-wise distance for downstream applications.
 
 ```{r}
-file_path <- system.file("extdata", "clone_graph_dis.rds", package = "Clonotrace")
-clone_dis = readRDS(file_path)
+file_path <- system.file("extdata", "clone_graph_dis.tsv", package = "Clonotrace")
+clone_dis = read.table(file_path,sep = "\t")
+
+clone_dis = long2square(long = as.data.frame(clone_dis),row_names_from = "group1",
+                        col_names_from = "group2",values_from = "dis",symmetric = T)
+diag(clone_dis) = 0
+rownames(clone_dis) = colnames(clone_dis) = colnames(cell_clone_prob)
 ```
 
 ### clone embedding visualization
@@ -252,7 +301,7 @@ xlab("UMAP 1")+ylab("UMAP 2")
 clone_leiden_umap
 ```
 
-We can also visualize the clone embedding in other low dimension reduction like diffusion map:
+We can also visualize the clone embedding in other low dimension reductions like a diffusion map:
 
 ```{r}
 clone_leiden_dm <- diffusionMap::diffuse(clone_dis,maxdim = 30)
@@ -282,7 +331,7 @@ xlab("dm 1")+ylab("dm 2")
 clone_leiden_diffmap
 ```
 
-Diffusion map is good to layout continous movement of clones over time.
+Diffusion map is good to layout continuous movement of clones over time. Here we can mark how clones with the same lineage barcodes change across time.
 
 ```{r}
 clone_cluster = clone_cluster %>% mutate(clone = rownames(clone_cluster)) %>% 
@@ -335,9 +384,11 @@ guides(fill = guide_legend(override.aes = list(size=5)),
 clone_leiden_diffmap_arrow
 ```
 
+From the diffusion map we can see an organized clonal shift from day4 to day6.
+
 ### profile projection in cell embedding
 
-After we cluster the clones into profiles, with the cell clone probabilty, we can also map cells to profiles:
+After we cluster the clones into profiles, with the cell clone probability, we can also map cells to profiles:
 
 ```{r}
 clone_profile = clone_cluster %>% dplyr::select(clone,cluster) %>% mutate(flag = 1)
@@ -381,7 +432,7 @@ guides(alpha = "none",color = guide_legend(override.aes = list(size=5)))
 cell_profile_umap
 ```
 
-Obvisouly, profile 5 and 6 monopotently differentiate to monocytes and profile 3 and 7 monopotently differentiate to netriphil, while profile 1 and 4 denote the bipotent differenitation.
+Obvisouly, profile 5 and 6 unipotently differentiate to monocytes and profile 3 and 7 unipotently differentiate to netriphil, while profile 1 and 4 denote the bipotent differenitation.
 
 ### Clone level pseudotime
 
@@ -463,7 +514,7 @@ plan(multisession, workers = 8)
 coembed_dis = cell_clone_coembed(cell_embedding,clone_embedding)
 ```
 
-This function `cell_clone_coembed` would return a sparse distance matrix, which denotes a weighted kNN network between cells. We can project this kNN network to UMAP for visulization. This step requires a python script.
+This function `cell_clone_coembed` would return a sparse distance matrix, which denotes a weighted kNN network between cells. We can project this kNN network to UMAP for visualization. This step requires a python script.
 
 ```{r}
 # set you python path
@@ -494,7 +545,7 @@ NoLegend()
 coembed_umap_cluster
 ```
 
-Obviously, there appear two boundaries within the two branchs for monocytes (cluster 4, 3, 5) and neutriphils (cluster 1, 6, 7), which denote the clone level heterogenity. Once we colored cells by the profile identity, we can see the two boundaries seperate the bipoent and unipotent profiles.
+Obviously, there appear two boundaries within the two branches for monocytes (cluster 4, 3, 5) and neutriphils (cluster 1, 6, 7), which denote the clone level heterogeneity. Once we colored cells by the profile identity, we can see the two boundaries seperate the bipotent and unipotent profiles.
 
 ```{r}
 coembed_umap_profile = dimplot(embedding = cell_coembed_umap,annot = cell_meta,alpha_by = NULL,label_size = 8,
@@ -508,7 +559,7 @@ coembed_umap_profile
 
 ### profile enrichment in each cluster
 
-In the dowsntream analysis we will focus on the early bipotent profiles (profile) and detect early fate-associated genes. To achieve this goal we first do an enrichment test between profiles and clusters to show in which cluster profile 1 has significant high density. And then within the target cluster, we compare the gene expression between profile 1 and other profiles to identify early fate-associated genes.
+In the downstream analysis we will focus on the early bipotent profiles (profile) and detect early fate-associated genes. To achieve this goal we first do an enrichment test between profiles and clusters to show in which cluster profile 1 has significant high density. And then within the target cluster, we compare the gene expression between profile 1 and other profiles to identify early fate-associated genes.
 
 We first do the cell cluster profile enrichment using permutation test:
 
@@ -545,7 +596,7 @@ ylab("clone profile")
 cell_type_profile_enrich_heatmap
 ```
 
-From the heatmap we can see that our target profile 1 is enriched in 4 cell clusters, including 1, 3, 4 and 8, within which cluster 1 and 4 are at early differentiation stage. Here, as an example, we will identify genes differentially expressed in profile 1 in cluter 4.
+From the heatmap we can see that our target profile 1 is enriched in 4 cell clusters, including 1, 3, 4 and 8, within which cluster 1 and 4 are at early differentiation stage. Here, as an example, we will identify genes differentially expressed in profile 1 in cluster 4.
 
 ### profile DEG within clusters
 
@@ -625,3 +676,4 @@ xlab("UMAP 1")+ylab("UMAP 2")
 feature_scatter
 ```
 
+Obviously, this `Dmkn` gene shows higher expression in the bipotent profile no matter in monocyte or neutriphil.
