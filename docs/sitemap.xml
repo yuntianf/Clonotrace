@@ -7,6 +7,9 @@
     <loc>/LICENSE-text.html</loc>
   </url>
   <url>
+    <loc>/LICENSE.html</loc>
+  </url>
+  <url>
     <loc>/articles/Clonotrace.html</loc>
   </url>
   <url>
@@ -79,6 +82,9 @@
     <loc>/reference/connectivity_coord.html</loc>
   </url>
   <url>
+    <loc>/reference/create_hdf5_matrix.html</loc>
+  </url>
+  <url>
     <loc>/reference/dimplot.html</loc>
   </url>
   <url>
@@ -139,7 +145,13 @@
     <loc>/reference/label_spreading.html</loc>
   </url>
   <url>
+    <loc>/reference/label_spreading_blocked.html</loc>
+  </url>
+  <url>
     <loc>/reference/label_spreading_bootstrap.html</loc>
+  </url>
+  <url>
+    <loc>/reference/label_spreading_bootstrap_blocked.html</loc>
   </url>
   <url>
     <loc>/reference/leiden_dis.html</loc>
@@ -182,6 +194,9 @@
   </url>
   <url>
     <loc>/reference/nearest_knn.html</loc>
+  </url>
+  <url>
+    <loc>/reference/normalize_hdf5_rows.html</loc>
   </url>
   <url>
     <loc>/reference/profile_cluster_DEG.html</loc>
