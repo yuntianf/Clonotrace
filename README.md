@@ -20,6 +20,8 @@ pip install -r requirements.txt
 ```
 in your python3 environment.
 
+The python version of this package can be found in https://github.com/yizhou0201/Clonotrace_python
+
 ## Instruction
 To view the documetation and tutorial of Clonotrace, you could visit:
 https://yuntianf.github.io/Clonotrace/
