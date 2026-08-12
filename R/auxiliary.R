@@ -718,6 +718,7 @@ is_symmetric <- function(matrix) {
 #' @return A data frame where each row represents a temporal edge with start/end times and next-step features.
 #'
 #' @importFrom dplyr select arrange_at group_by_at mutate lead filter all_of
+#' @importFrom rlang sym
 #' @examples
 #' df <- data.frame(id = c(1, 1, 2, 2), time = c(1, 2, 1, 2), val = c(5, 6, 3, 4))
 #' edges <- build_edges(df, id_col = "id", order_col = "time")
@@ -988,6 +989,7 @@ sparse_norm = function(mat,dim = 1){
 #' @return A filtered data frame with the same columns as `x`, excluding the temporary bin column.
 #'
 #' @importFrom dplyr mutate group_by summarise filter select n
+#' @importFrom rlang sym
 #' @export
 bin_filter = function(x,col,thresh = 10,breaks = 100){
   x = as.data.frame(x)

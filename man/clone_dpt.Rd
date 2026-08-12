@@ -2,7 +2,7 @@
 % Please edit documentation in R/pseudotime.R
 \name{clone_dpt}
 \alias{clone_dpt}
-\title{clone_root}
+\title{clone_dpt}
 \usage{
 clone_dpt(
   clone_embedding,

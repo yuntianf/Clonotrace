@@ -137,7 +137,7 @@ clone_root = function(clones,cell_meta,clone_col,cluster_col,start_cluster){
   return(unlist(root[,clone_col])[1])
 }
 
-#' @title clone_root
+#' @title clone_dpt
 #'
 #' @description Compute Clone-Level Diffusion Pseudotime
 #' @details

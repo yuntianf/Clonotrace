@@ -2,7 +2,7 @@
 % Please edit documentation in R/profile_DEG.R
 \name{cluster_profile_mass}
 \alias{cluster_profile_mass}
-\title{soft_cluster_gam_fit}
+\title{cluster_profile_mass}
 \usage{
 cluster_profile_mass(cell_profile_prob, cluster_label)
 }

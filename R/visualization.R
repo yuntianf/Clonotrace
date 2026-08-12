@@ -67,6 +67,7 @@ connectivity_coord = function(coord,connectivity,dims = c(1,2)){
 #' @importFrom magrittr %>%
 #' @importFrom ggrepel geom_text_repel geom_label_repel
 #' @importFrom ggrastr rasterize
+#' @importFrom rlang sym
 #'
 #' @examples
 #' \dontrun{
@@ -183,6 +184,7 @@ dimplot = function(embedding, annot, color_by, alpha_by = NULL,connectivity = NU
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom scatterpie geom_scatterpie
 #' @importFrom dplyr filter
+#' @importFrom rlang sym
 #'
 #' @examples
 #' \dontrun{
