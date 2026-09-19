@@ -26,6 +26,9 @@ The python version of this package can be found in https://github.com/yizhou0201
 To view the documetation and tutorial of Clonotrace, you could visit:
 https://yuntianf.github.io/Clonotrace/
 
+### The revised clone distance (default)
+`clone_disance()` now returns the revised Clonotrace distance by default. The graph distance between clones is locally rescaled, then combined with the distance between clone means. The weight is chosen from the data without cell-type labels or cross-validation (`?revise_clone_distance`). Pass the observed clone labels through `clone_labels = cell_clone`. `revised = FALSE` gives the earlier graph distance, and `revise_clone_distance()` applies the revision to a distance you have already computed.
+
 ## Citation
 
 If you use Longcell for published work, please cite our manuscript:

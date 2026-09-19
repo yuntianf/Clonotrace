@@ -11,13 +11,14 @@ Depends: R (>= 4.1.0)
 LazyData: true
 RoxygenNote: 7.2.1
 Remotes: LTLA/bluster
-Imports: Matrix, RANN, RSpectra, abind, dbscan, dplyr, future, future.apply, tidyr, transport, ggplot2, ggrastr, ggrepel, igraph, scatterpie, splines, stats, uwot, reticulate, rhdf5, umap, bluster, magrittr
+Imports: Matrix, RANN, RSpectra, abind, dbscan, dplyr, future, future.apply, tidyr, transport, ggplot2, ggrastr, ggrepel, igraph, scatterpie, splines, stats, uwot (>= 0.1.15), reticulate, rhdf5, umap, bluster, magrittr, methods
 Suggests:
     knitr,
     rmarkdown
 Collate: 
     'auxiliary.R'
     'clone_dis.R'
+    'revised_distance.R'
     'cluster.R'
     'coembed.R'
     'label_propagation.R'

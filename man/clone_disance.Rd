@@ -11,6 +11,9 @@ clone_disance(
   graph_k = 10,
   overwrite = FALSE,
   exact = FALSE,
+  revised = TRUE,
+  clone_labels = NULL,
+  sample = NULL,
   ...
 )
 }
@@ -27,10 +30,25 @@ clone_disance(
 
 \item{exact}{Logical. If `TRUE`, computes exact OT-based clone distances; otherwise, uses approximate NN (default: FALSE).}
 
-\item{...}{Additional arguments passed to `graph_clone_ot()` or `graph_clone_nn()`.}
+\item{revised}{Logical. If `TRUE` (the default), returns the revised Clonotrace distance: the graph
+distance, locally rescaled and combined with the clone-mean distance at a weight chosen without
+labels (see `revise_clone_distance()`). If `FALSE`, returns the graph distance alone, as in
+Clonotrace 1.1.0.}
+
+\item{clone_labels}{Observed clone membership used for the clone means: the `cell_clone` data frame
+(columns `cell`, `clone`) or a vector named by cell. If `NULL`, cells are weighted by
+`cell_clone_prob`. Only used when `revised = TRUE`.}
+
+\item{sample}{Optional clone-level grouping (e.g. patient) passed to `revise_clone_distance()`.}
+
+\item{...}{Additional arguments passed to `graph_clone_ot()` or `graph_clone_nn()`, and to
+`revise_clone_distance()` (`local_k`, `resolutions`, `clusters`, `cluster_k`, `mean_weight`, `seed`).}
 }
 \value{
 A data frame with columns `group1`, `group2`, and `dis`, representing pairwise clone distances.
+  `group1` and `group2` index `colnames(cell_clone_prob)`. With `revised = TRUE`, `dis` is the revised
+  distance, the graph distance is kept in `dis_clonotrace`, and the weight on the clone mean is in
+  `attr(result, "mean_weight")`.
 }
 \description{
 Compute Clone-to-Clone Distances from Cell Embedding and Clone Assignments

@@ -248,27 +248,29 @@ After we smooth the cell density for each expanded clone over the cell transcrip
 
 We provide two methods for this, the first one calculates the exact optimal transportation distance, and the second one is a faster approximation, but less accurate. You can switch the modes by the `exact` parameter in the `clone_disance` function.
 
+By default `clone_disance` returns the **revised** Clonotrace distance. The graph distance is locally rescaled, so that clones in dense and sparse regions sit on one scale, and then combined with the distance between the clones' mean positions in the embedding. The weight on the mean is chosen from the data without cell-type labels or cross-validation. For each of several Leiden resolutions, the weight is the one whose distance best follows the difference in the clones' cluster composition; the median across resolutions is used (see `?revise_clone_distance`). Pass the observed clone labels (`cell_clone`) for the clone means. The graph distance is kept in the `dis_clonotrace` column, and `revised = FALSE` returns it alone, as in earlier versions. The revision costs one Leiden clustering of the cells plus arithmetic over the clone pairs, which is minutes at most next to the hours of the graph distance.
+
 ```{r,eval = FALSE}
 # not run
 plan(multisession, workers = 8)
 ### exact OT distance
-clone_dis = clone_disance(as.matrix(pca),cell_clone_prob,outpath = "./",exact = TRUE, cores = 8)
+clone_dis = clone_disance(as.matrix(pca),cell_clone_prob,outpath = "./",exact = TRUE, cores = 8,
+                          clone_labels = cell_clone)
 ### nearest neighbor distance approximation
-clone_dis = clone_disance(as.matrix(pca),cell_clone_prob,outpath = "./",exact = FALSE)
+clone_dis = clone_disance(as.matrix(pca),cell_clone_prob,outpath = "./",exact = FALSE,
+                          clone_labels = cell_clone)
+attr(clone_dis, "mean_weight")  # the weight on the clone mean
 ```
 
 This step is time and memory consuming, which can take hours even with the approximation. We strongly recommend to put this step in a server or cluster and run it with multiple cores. (As a reference, the approximation method takes 40 minutes to run on the HPC paralleled with 4 cores using 8 Gb RAM).
 
-Here for time efficiency, we can use the pre-computed clone-wise distance for downstream applications.
+Here for time efficiency, we can use the pre-computed graph distance, and apply the revision to it with `revise_clone_distance`, which is what `clone_disance` does by default.
 
 ```{r}
 file_path <- system.file("extdata", "clone_graph_dis.tsv", package = "Clonotrace")
-clone_dis = read.table(file_path,sep = "\t")
-
-clone_dis = long2square(long = as.data.frame(clone_dis),row_names_from = "group1",
-                        col_names_from = "group2",values_from = "dis",symmetric = T)
-diag(clone_dis) = 0
-rownames(clone_dis) = colnames(clone_dis) = colnames(cell_clone_prob)
+clone_graph_dis = read.table(file_path,sep = "\t",header = TRUE)
+clone_dis = revise_clone_distance(clone_graph_dis, as.matrix(pca), clone_labels = cell_clone,
+                                  clone_names = colnames(cell_clone_prob))
 ```
 
 ### clone embedding visualization

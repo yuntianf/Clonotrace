@@ -12,15 +12,28 @@
 #' @param graph_k Integer. Number of neighbors to use in the SNN graph (default: 10).
 #' @param overwrite Logical. Whether to overwrite previously saved graphs and results (default: FALSE).
 #' @param exact Logical. If `TRUE`, computes exact OT-based clone distances; otherwise, uses approximate NN (default: FALSE).
-#' @param ... Additional arguments passed to `graph_clone_ot()` or `graph_clone_nn()`.
+#' @param revised Logical. If `TRUE` (the default), returns the revised Clonotrace distance: the graph
+#'   distance, locally rescaled and combined with the clone-mean distance at a weight chosen without
+#'   labels (see `revise_clone_distance()`). If `FALSE`, returns the graph distance alone, as in
+#'   Clonotrace 1.1.0.
+#' @param clone_labels Observed clone membership used for the clone means: the `cell_clone` data frame
+#'   (columns `cell`, `clone`) or a vector named by cell. If `NULL`, cells are weighted by
+#'   `cell_clone_prob`. Only used when `revised = TRUE`.
+#' @param sample Optional clone-level grouping (e.g. patient) passed to `revise_clone_distance()`.
+#' @param ... Additional arguments passed to `graph_clone_ot()` or `graph_clone_nn()`, and to
+#'   `revise_clone_distance()` (`local_k`, `resolutions`, `clusters`, `cluster_k`, `mean_weight`, `seed`).
 #'
 #' @return A data frame with columns `group1`, `group2`, and `dis`, representing pairwise clone distances.
+#'   `group1` and `group2` index `colnames(cell_clone_prob)`. With `revised = TRUE`, `dis` is the revised
+#'   distance, the graph distance is kept in `dis_clonotrace`, and the weight on the clone mean is in
+#'   `attr(result, "mean_weight")`.
 #' @importFrom  bluster makeSNNGraph
 #' @importFrom igraph edge_attr
 #' @importFrom igraph set_edge_attr
 #' @export
 clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
-                         overwrite = FALSE,exact = FALSE,...){
+                         overwrite = FALSE,exact = FALSE,revised = TRUE,
+                         clone_labels = NULL,sample = NULL,...){
   cells = intersect(rownames(embedding),rownames(cell_clone_prob))
   if(length(setdiff(rownames(cell_clone_prob),cells)) > 0){
     warning("The cell_clone_prob has cells which are not in the cell embedding, those cells would be removed!")
@@ -44,7 +57,7 @@ clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
 
   if(file.exists(file.path(outpath,"clone_graph_dis.rds")) & !overwrite){
     cat("The groups_graph is already calculated and overwrite is not allowed, will use the exsting one!\n")
-    dis_result = readRDS(file.path(outpath,"groups_graph_dis.rds"))
+    dis_result = readRDS(file.path(outpath,"clone_graph_dis.rds"))
   }
   else{
     args <- list(...)
@@ -60,6 +73,22 @@ clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
     }
 
     saveRDS(dis_result,file.path(outpath,"clone_graph_dis.rds"))
+  }
+
+  if(revised){
+    args <- list(...)
+    rev_args <- c("local_k","resolutions","clusters","cluster_k","mean_weight","s_grid","seed")
+    rev <- do.call(revise_clone_distance,
+                   c(list(clone_dis = dis_result, embedding = embedding, clone_labels = clone_labels,
+                          cell_clone_prob = cell_clone_prob, clone_names = colnames(cell_clone_prob),
+                          sample = sample),
+                     args[names(args) %in% rev_args]))
+    long = as.data.frame(dis_result)
+    long$dis_clonotrace = long$dis
+    long$dis = rev[cbind(as.integer(long$group1), as.integer(long$group2))]
+    attr(long, "mean_weight") = attr(rev, "mean_weight")
+    attr(long, "picks") = attr(rev, "picks")
+    dis_result = long
   }
 
   return(dis_result)
