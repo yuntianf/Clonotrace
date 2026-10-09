@@ -1,0 +1,150 @@
+# Package index
+
+## All functions
+
+- [`DPT_T()`](https://yuntianf.github.io/Clonotrace/reference/DPT_T.md)
+  : DPT_T
+- [`acct()`](https://yuntianf.github.io/Clonotrace/reference/acct.md) :
+  acct
+- [`bin_filter()`](https://yuntianf.github.io/Clonotrace/reference/bin_filter.md)
+  : bin_filter
+- [`bin_filter_profile_mass()`](https://yuntianf.github.io/Clonotrace/reference/bin_filter_profile_mass.md)
+  : bin_filter_profile_mass
+- [`build_edges()`](https://yuntianf.github.io/Clonotrace/reference/build_edges.md)
+  : build_edges
+- [`build_graph_distance_store()`](https://yuntianf.github.io/Clonotrace/reference/build_graph_distance_store.md)
+  : Build a Disk-Backed Exact Cell-Graph Distance Store
+- [`ceil_digit()`](https://yuntianf.github.io/Clonotrace/reference/ceil_digit.md)
+  : ceil_digit
+- [`cell_clone_coembed()`](https://yuntianf.github.io/Clonotrace/reference/cell_clone_coembed.md)
+  : cell_clone_coembed
+- [`cell_knn_matrix_multiplication_parallel()`](https://yuntianf.github.io/Clonotrace/reference/cell_knn_matrix_multiplication_parallel.md)
+  : cell_knn_matrix_multiplication_parallel
+- [`cell_knn_matrix_mutiplication()`](https://yuntianf.github.io/Clonotrace/reference/cell_knn_matrix_mutiplication.md)
+  : cell_knn_matrix_mutiplication
+- [`clone_2_ot()`](https://yuntianf.github.io/Clonotrace/reference/clone_2_ot.md)
+  : clone_2_ot
+- [`clone_disance()`](https://yuntianf.github.io/Clonotrace/reference/clone_disance.md)
+  : clone_disance
+- [`clone_dpt()`](https://yuntianf.github.io/Clonotrace/reference/clone_dpt.md)
+  : clone_dpt
+- [`clone_partition()`](https://yuntianf.github.io/Clonotrace/reference/clone_partition.md)
+  : clone_partition
+- [`clone_root()`](https://yuntianf.github.io/Clonotrace/reference/clone_root.md)
+  : clone_root
+- [`cluster_merge()`](https://yuntianf.github.io/Clonotrace/reference/cluster_merge.md)
+  : cluster_merge
+- [`cluster_profile_enrich()`](https://yuntianf.github.io/Clonotrace/reference/cluster_profile_enrich.md)
+  : cluster_profile_enrich
+- [`cluster_profile_mass()`](https://yuntianf.github.io/Clonotrace/reference/cluster_profile_mass.md)
+  : cluster_profile_mass
+- [`combn_dedup()`](https://yuntianf.github.io/Clonotrace/reference/combn_dedup.md)
+  : combn_dedup
+- [`compute_transition()`](https://yuntianf.github.io/Clonotrace/reference/compute_transition.md)
+  : compute_transition
+- [`connectivity_coord()`](https://yuntianf.github.io/Clonotrace/reference/connectivity_coord.md)
+  : connectivity_coord
+- [`create_hdf5_matrix()`](https://yuntianf.github.io/Clonotrace/reference/create_hdf5_matrix.md)
+  : create_hdf5_matrix
+- [`dimplot()`](https://yuntianf.github.io/Clonotrace/reference/dimplot.md)
+  : dimplot
+- [`dis2connec_sparse()`](https://yuntianf.github.io/Clonotrace/reference/dis2connec_sparse.md)
+  : dis2connec_sparse
+- [`dis_point_to_edge()`](https://yuntianf.github.io/Clonotrace/reference/dis_point_to_edge.md)
+  : dis_point_to_edge
+- [`dis_points_to_edges()`](https://yuntianf.github.io/Clonotrace/reference/dis_points_to_edges.md)
+  : dis_points_to_edges
+- [`dismat_mst()`](https://yuntianf.github.io/Clonotrace/reference/dismat_mst.md)
+  : dismat_mst
+- [`dist2knn()`](https://yuntianf.github.io/Clonotrace/reference/dist2knn.md)
+  : dist2knn
+- [`dpt()`](https://yuntianf.github.io/Clonotrace/reference/dpt.md) :
+  dpt
+- [`embedding2dpt()`](https://yuntianf.github.io/Clonotrace/reference/embedding2dpt.md)
+  : embedding2dpt
+- [`embedding2knn()`](https://yuntianf.github.io/Clonotrace/reference/embedding2knn.md)
+  : embedding2knn
+- [`filter_network()`](https://yuntianf.github.io/Clonotrace/reference/filter_network.md)
+  : filter_network
+- [`find_mutual_nn()`](https://yuntianf.github.io/Clonotrace/reference/find_mutual_nn.md)
+  : find_mutual_nn
+- [`graph_clone_nn()`](https://yuntianf.github.io/Clonotrace/reference/graph_clone_nn.md)
+  : graph_clone_nn
+- [`graph_clone_ot()`](https://yuntianf.github.io/Clonotrace/reference/graph_clone_ot.md)
+  : graph_clone_ot
+- [`graph_clone_ot_disk()`](https://yuntianf.github.io/Clonotrace/reference/graph_clone_ot_disk.md)
+  : Exact Clone OT from a Disk-Backed Graph-Distance Store
+- [`graph_clone_ot_sub()`](https://yuntianf.github.io/Clonotrace/reference/graph_clone_ot_sub.md)
+  : graph_clone_ot_sub
+- [`group_2_min()`](https://yuntianf.github.io/Clonotrace/reference/group_2_min.md)
+  : group_2_min
+- [`is_symmetric()`](https://yuntianf.github.io/Clonotrace/reference/is_symmetric.md)
+  : is_symmetric
+- [`knn_between_groups()`](https://yuntianf.github.io/Clonotrace/reference/knn_between_groups.md)
+  : knn_between_groups
+- [`knn_flat()`](https://yuntianf.github.io/Clonotrace/reference/knn_flat.md)
+  : knn_flat
+- [`label_spreading()`](https://yuntianf.github.io/Clonotrace/reference/label_spreading.md)
+  : label_spreading
+- [`label_spreading_blocked()`](https://yuntianf.github.io/Clonotrace/reference/label_spreading_blocked.md)
+  : label_spreading_blocked
+- [`label_spreading_bootstrap()`](https://yuntianf.github.io/Clonotrace/reference/label_spreading_bootstrap.md)
+  : Bootstrap-Based Stability Estimation for Label Propagation
+- [`label_spreading_bootstrap_blocked()`](https://yuntianf.github.io/Clonotrace/reference/label_spreading_bootstrap_blocked.md)
+  : label_spreading_bootstrap_blocked
+- [`leiden_dis()`](https://yuntianf.github.io/Clonotrace/reference/leiden_dis.md)
+  : leiden_dis
+- [`leiden_embedding()`](https://yuntianf.github.io/Clonotrace/reference/leiden_embedding.md)
+  : leiden_embedding
+- [`leiden_embedding_fast()`](https://yuntianf.github.io/Clonotrace/reference/leiden_embedding_fast.md)
+  : leiden_embedding_fast
+- [`link2cluster()`](https://yuntianf.github.io/Clonotrace/reference/link2cluster.md)
+  : link2cluster
+- [`long2sparse()`](https://yuntianf.github.io/Clonotrace/reference/long2sparse.md)
+  : long2sparse
+- [`long2square()`](https://yuntianf.github.io/Clonotrace/reference/long2square.md)
+  : long2square
+- [`long2wide()`](https://yuntianf.github.io/Clonotrace/reference/long2wide.md)
+  : long2wide
+- [`long_symmetry()`](https://yuntianf.github.io/Clonotrace/reference/long_symmetry.md)
+  : long_symmetry
+- [`mass_filter()`](https://yuntianf.github.io/Clonotrace/reference/mass_filter.md)
+  : mass_filter
+- [`mat_sparsify()`](https://yuntianf.github.io/Clonotrace/reference/mat_sparsify.md)
+  : mat_sparsify
+- [`mat_split()`](https://yuntianf.github.io/Clonotrace/reference/mat_split.md)
+  : mat_split
+- [`mds_from_knn()`](https://yuntianf.github.io/Clonotrace/reference/mds_from_knn.md)
+  : mds_from_knn
+- [`mnn_dist()`](https://yuntianf.github.io/Clonotrace/reference/mnn_dist.md)
+  : mnn_dist
+- [`nearest_knn()`](https://yuntianf.github.io/Clonotrace/reference/nearest_knn.md)
+  : nearest_knn
+- [`normalize_hdf5_rows()`](https://yuntianf.github.io/Clonotrace/reference/normalize_hdf5_rows.md)
+  : normalize_hdf5_rows
+- [`profile_cluster_DEG()`](https://yuntianf.github.io/Clonotrace/reference/profile_cluster_DEG.md)
+  : profile_cluster_DEG
+- [`profile_cluster_DEG_permute()`](https://yuntianf.github.io/Clonotrace/reference/profile_cluster_DEG_permute.md)
+  : profile_cluster_DEG_permute
+- [`profile_multiclusters_DEG()`](https://yuntianf.github.io/Clonotrace/reference/profile_multiclusters_DEG.md)
+  : profile_multiclusters_DEG
+- [`revise_clone_distance()`](https://yuntianf.github.io/Clonotrace/reference/revise_clone_distance.md)
+  : Revise a Clonotrace clone distance
+- [`ridge_regression()`](https://yuntianf.github.io/Clonotrace/reference/ridge_regression.md)
+  : ridge_regression
+- [`scatterpie()`](https://yuntianf.github.io/Clonotrace/reference/scatterpie.md)
+  : scatterpie
+- [`soft_cluster_gam_fit()`](https://yuntianf.github.io/Clonotrace/reference/soft_cluster_gam_fit.md)
+  : soft_cluster_gam_fit
+- [`sparse_manupulation()`](https://yuntianf.github.io/Clonotrace/reference/sparse_manupulation.md)
+  : sparse_manupulation
+- [`sparse_norm()`](https://yuntianf.github.io/Clonotrace/reference/sparse_norm.md)
+  : sparse_norm
+- [`sync_sparse_rows()`](https://yuntianf.github.io/Clonotrace/reference/sync_sparse_rows.md)
+  : sync_sparse_rows
+- [`top_k()`](https://yuntianf.github.io/Clonotrace/reference/top_k.md)
+  : top_k
+- [`umap_from_knn()`](https://yuntianf.github.io/Clonotrace/reference/umap_from_knn.md)
+  : umap_from_knn
+- [`wide2long()`](https://yuntianf.github.io/Clonotrace/reference/wide2long.md)
+  : wide2long
