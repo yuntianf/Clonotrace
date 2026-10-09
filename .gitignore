@@ -1,7 +1,6 @@
 .Rhistory
 .Rproj.user
-.Rbuildignore
-# docs
-inst/extdata/demo_files/
-inst/extdata/Clonotrace.ipynb
-inst/extdata/demo.md
+Clonotrace.Rcheck/
+Clonotrace_*.tar.gz
+build/
+

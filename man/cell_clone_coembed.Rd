@@ -4,12 +4,22 @@
 \alias{cell_clone_coembed}
 \title{cell_clone_coembed}
 \usage{
-cell_clone_coembed(cell_embedding, clone_embedding, cell_k = 30, clone_k = 15)
+cell_clone_coembed(
+  cell_embedding,
+  clone_embedding,
+  cell_clone_prob,
+  cell_k = 30,
+  clone_k = 15
+)
 }
 \arguments{
 \item{cell_embedding}{A numeric matrix of cell embeddings (rows = cells).}
 
 \item{clone_embedding}{A numeric matrix of clone embeddings (rows = clones).}
+
+\item{cell_clone_prob}{A numeric or sparse matrix of cell-by-clone membership
+probabilities. Row names must identify cells and column names must identify
+clones.}
 
 \item{cell_k}{Integer. Number of neighbors to compute for cell-level kNN (default: 30).}
 

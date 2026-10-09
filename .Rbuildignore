@@ -1,7 +1,12 @@
-^_pkgdown\.yml$
+^_pkgdown[.]yml$
 ^docs$
 ^pkgdown$
-^.*\.Rproj$
-^\.Rproj\.user$
-^LICENSE\.md$
-^requirements\\.txt$
+^.*[.]Rproj$
+^[.]Rproj[.]user$
+^[.]github$
+^requirements[.]txt$
+^vignettes/Clonotrace[.]html$
+^build$
+^Clonotrace[.]Rcheck$
+^Clonotrace_[0-9.]+[.]tar[.]gz$
+

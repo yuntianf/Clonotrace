@@ -124,7 +124,7 @@ soft_cluster_gam_fit <- function(G, t, P, df = 5, lambda = 1e-4,test = "F") {
   #   for (k in 1:m) {
   #     X_full[, ((k - 1) * d + 1):(k * d)] <- B * P[, k]
   #   }
-  X_full <- model.matrix(~ 0 + B:P)
+  X_full <- stats::model.matrix(~ 0 + B:P)
 
   # Null model: shared smooth
   X_null <- B
@@ -143,7 +143,7 @@ soft_cluster_gam_fit <- function(G, t, P, df = 5, lambda = 1e-4,test = "F") {
   test = match.arg(test,c("F","LRT"))
   if (test == "F") {
     F_stat <- ((null$rss - full$rss) / df1) / (full$rss / df2)
-    pval <- pf(F_stat, df1, df2, lower.tail = FALSE)
+    pval <- stats::pf(F_stat, df1, df2, lower.tail = FALSE)
     stat <- F_stat
   } else if (test == "LRT") {
     # Gaussian likelihood: log L = -0.5 * n * log(RSS)
@@ -151,7 +151,7 @@ soft_cluster_gam_fit <- function(G, t, P, df = 5, lambda = 1e-4,test = "F") {
     logLik_full <- -0.5 * n * log(full$rss)
 
     LRT_stat <- 2 * (logLik_full - logLik_null)  # vectorized
-    pval <- pchisq(LRT_stat, df = df1, lower.tail = FALSE)
+    pval <- stats::pchisq(LRT_stat, df = df1, lower.tail = FALSE)
     stat <- LRT_stat
   }
 

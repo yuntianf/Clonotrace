@@ -29,7 +29,11 @@ long2wide = function(long,row_names_from,col_names_from,values_from,symmetric = 
     long = rbind(long,rlong)
     long = long[!duplicated(long),]
   }
-  out = tidyr::pivot_wider(long,names_from = col_names_from,values_from = values_from)
+  out = tidyr::pivot_wider(
+    long,
+    names_from = dplyr::all_of(col_names_from),
+    values_from = dplyr::all_of(values_from)
+  )
 
   out = as.data.frame(out)
   rownames(out) = out[,row_names_from]
@@ -104,32 +108,96 @@ long_symmetry = function(long,row_names_from, col_names_from){
 #' @export
 long2square = function(long, row_names_from, col_names_from, values_from,
                        symmetric = TRUE,na.fill = NA,nodes = NULL){
-  long = as.data.frame(long)
+  long = as.data.frame(long, stringsAsFactors = FALSE)
+  if (nrow(long) == 0L && !is.null(nodes)) {
+    nodes <- as.character(nodes)
+    if (anyNA(nodes) || any(nodes == "") || anyDuplicated(nodes)) {
+      stop("`nodes` must contain unique, non-missing, non-empty identifiers.")
+    }
+    nodes <- sort(nodes)
+    return(matrix(na.fill, nrow = length(nodes), ncol = length(nodes),
+                  dimnames = list(nodes, nodes)))
+  }
+  requested_columns <- c(row_names_from, col_names_from, values_from)
+  if (!all(vapply(requested_columns, is.character, logical(1))) ||
+      any(lengths(list(row_names_from, col_names_from, values_from)) != 1L)) {
+    stop("`row_names_from`, `col_names_from`, and `values_from` must each name one column.")
+  }
+  missing_columns <- setdiff(requested_columns, colnames(long))
+  if (length(missing_columns) > 0L) {
+    stop("Missing required column(s): ", paste(missing_columns, collapse = ", "), ".")
+  }
+  if (nrow(long) == 0L && is.null(nodes)) {
+    stop("`long` is empty; provide `nodes` to define the requested square matrix.")
+  }
   long = long[, c(row_names_from, col_names_from, values_from)]
+  long[[row_names_from]] <- as.character(long[[row_names_from]])
+  long[[col_names_from]] <- as.character(long[[col_names_from]])
+  if (anyNA(long[[row_names_from]]) || anyNA(long[[col_names_from]]) ||
+      any(long[[row_names_from]] == "") || any(long[[col_names_from]] == "")) {
+    stop("Pair identifiers must be non-missing, non-empty values.")
+  }
+  if (!is.numeric(long[[values_from]])) {
+    converted <- suppressWarnings(as.numeric(as.character(long[[values_from]])))
+    if (anyNA(converted) && any(!is.na(long[[values_from]]))) {
+      stop("`", values_from, "` must be numeric or safely coercible to numeric.")
+    }
+    long[[values_from]] <- converted
+  }
+
+  pair_key <- paste(long[[row_names_from]], long[[col_names_from]], sep = "\r")
+  if (anyDuplicated(pair_key)) {
+    stop("Duplicate row/column pairs are not allowed; aggregate them explicitly before calling `long2square()`.")
+  }
   if (symmetric) {
     long = long_symmetry(long,row_names_from, col_names_from)
+    pair_key <- paste(long[[row_names_from]], long[[col_names_from]], sep = "\r")
+    if (anyDuplicated(pair_key)) {
+      duplicated_keys <- unique(pair_key[duplicated(pair_key) | duplicated(pair_key, fromLast = TRUE)])
+      conflicts <- vapply(duplicated_keys, function(key) {
+        values <- long[[values_from]][pair_key == key]
+        length(unique(values[!is.na(values)])) > 1L
+      }, logical(1))
+      if (any(conflicts)) {
+        stop("Conflicting values were supplied for symmetric row/column pairs.")
+      }
+      long <- long[!duplicated(pair_key), , drop = FALSE]
+    }
   }
   if(is.null(nodes)){
-    nodes = unique(unlist(long[,row_names_from],long[,col_names_from]))
+    nodes = unique(c(long[[row_names_from]], long[[col_names_from]]))
+  }
+  nodes <- as.character(nodes)
+  if (anyNA(nodes) || any(nodes == "") || anyDuplicated(nodes)) {
+    stop("`nodes` must contain unique, non-missing, non-empty identifiers.")
   }
 
   mat = as.data.frame(tidyr::pivot_wider(long,
-                                         names_from = col_names_from,
-                                         values_from = values_from))
+                                         names_from = dplyr::all_of(col_names_from),
+                                         values_from = dplyr::all_of(values_from)),
+                      stringsAsFactors = FALSE)
   rownames(mat) = mat[, row_names_from]
-  mat = mat[,-which(colnames(mat)==row_names_from)]
+  mat = mat[,-which(colnames(mat)==row_names_from), drop = FALSE]
   # return(mat)
-  nodes = as.character(sort(nodes))
+  nodes = sort(nodes)
+  missing_rows <- setdiff(nodes, rownames(mat))
+  if (length(missing_rows) > 0L) {
+    empty_rows <- as.data.frame(matrix(NA_real_, nrow = length(missing_rows), ncol = ncol(mat)))
+    colnames(empty_rows) <- colnames(mat)
+    rownames(empty_rows) <- missing_rows
+    mat <- rbind(mat, empty_rows)
+  }
   diff = as.character(setdiff(nodes,colnames(mat)))
   if(length(diff) > 0){
     mat[,diff] = NA
   }
 
-  mat = mat[nodes,nodes]
+  mat = mat[nodes,nodes, drop = FALSE]
   rownames(mat) = colnames(mat) = nodes
 
   mat[is.na(mat)] = na.fill
   mat = as.matrix(mat)
+  storage.mode(mat) <- "double"
 
   return(mat)
 }
@@ -241,7 +309,7 @@ link2cluster = function(link,nodes){
   link_mat[is.na(link_mat)] = 0
   link_mat = 1-as.matrix(link_mat) %^% 20
 
-  cluster = dbscan(as.dist(link_mat),eps = 0,minPts = 1)
+  cluster = dbscan::dbscan(stats::as.dist(link_mat),eps = 0,minPts = 1)
   return(cluster$cluster)
 }
 
@@ -259,6 +327,7 @@ link2cluster = function(link,nodes){
 #' @return A data frame with columns `i` and `j`, representing mutual nearest neighbor pairs with `i < j`.
 #'
 #' @importFrom dbscan kNN
+#' @importFrom stats as.dist
 #' @importFrom dplyr inner_join filter
 #' @examples
 #' dist_mat <- dist(matrix(rnorm(100), ncol = 5))
@@ -267,7 +336,7 @@ link2cluster = function(link,nodes){
 #'
 #' @export
 mnn_dist = function(dis,k){
-  knn = kNN(as.dist(dis),k)
+  knn = dbscan::kNN(stats::as.dist(dis),k)
 
   id = cbind(rep(1:nrow(knn$id),times = k),c(knn$id))
   rid = id[,c(2,1)]
@@ -302,7 +371,7 @@ mnn_dist = function(dis,k){
 #'
 #' @export
 nearest_knn = function(dis,k,top = 3){
-  knn = kNN(as.dist(dis),k)
+  knn = dbscan::kNN(stats::as.dist(dis),k)
 
   id = cbind(rep(1:nrow(knn$id),times = k),c(knn$id))
   id_dis = as.data.frame(cbind(id,c(knn$dis)))
@@ -795,7 +864,7 @@ knn_flat = function(x,k,input = "matrix",symmetric = FALSE,if_dedup = FALSE,if_s
     knn = dbscan::kNN(x = x,k = k)
   }
   else if(input == "dist"){
-    knn = dbscan::kNN(x = as.dist(x),k = k)
+    knn = dbscan::kNN(x = stats::as.dist(x),k = k)
   }
 
 

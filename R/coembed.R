@@ -8,6 +8,9 @@
 #'
 #' @param cell_embedding A numeric matrix of cell embeddings (rows = cells).
 #' @param clone_embedding A numeric matrix of clone embeddings (rows = clones).
+#' @param cell_clone_prob A numeric or sparse matrix of cell-by-clone membership
+#'   probabilities. Row names must identify cells and column names must identify
+#'   clones.
 #' @param cell_k Integer. Number of neighbors to compute for cell-level kNN (default: 30).
 #' @param clone_k Integer. Number of neighbors to compute for clone-level kNN (default: 15).
 #'
@@ -17,7 +20,37 @@
 #' @importFrom Matrix drop0
 #'
 #' @export
-cell_clone_coembed = function(cell_embedding,clone_embedding,cell_k = 30,clone_k = 15){
+cell_clone_coembed = function(cell_embedding, clone_embedding, cell_clone_prob,
+                              cell_k = 30, clone_k = 15){
+  cell_embedding <- as.matrix(cell_embedding)
+  clone_embedding <- as.matrix(clone_embedding)
+  if (is.null(rownames(cell_embedding)) || is.null(rownames(clone_embedding)) ||
+      is.null(rownames(cell_clone_prob)) || is.null(colnames(cell_clone_prob))) {
+    stop("Cell and clone inputs must have row/column names for alignment.")
+  }
+  if (anyDuplicated(rownames(cell_embedding)) || anyDuplicated(rownames(clone_embedding)) ||
+      anyDuplicated(rownames(cell_clone_prob)) || anyDuplicated(colnames(cell_clone_prob))) {
+    stop("Cell and clone identifiers must be unique.")
+  }
+  missing_cells <- setdiff(rownames(cell_embedding), rownames(cell_clone_prob))
+  missing_clones <- setdiff(rownames(clone_embedding), colnames(cell_clone_prob))
+  if (length(missing_cells) > 0L || length(missing_clones) > 0L) {
+    stop("`cell_clone_prob` does not contain every cell and clone in the supplied embeddings.")
+  }
+  cell_clone_prob <- cell_clone_prob[rownames(cell_embedding), rownames(clone_embedding), drop = FALSE]
+  membership_values <- if (inherits(cell_clone_prob, "Matrix")) {
+    cell_clone_prob@x
+  } else {
+    as.numeric(cell_clone_prob)
+  }
+  if (any(!is.finite(cell_embedding)) || any(!is.finite(clone_embedding)) ||
+      any(!is.finite(membership_values))) {
+    stop("Embedding and membership inputs must contain only finite values.")
+  }
+  if (cell_k < 1L || cell_k >= nrow(cell_embedding) ||
+      clone_k < 1L || clone_k >= nrow(clone_embedding)) {
+    stop("`cell_k` and `clone_k` must be positive and smaller than their respective row counts.")
+  }
   cell_knn_flat = knn_flat(cell_embedding,k = cell_k,if_dedup = TRUE,symmetric = FALSE,if_self = TRUE)
   clone_knn = embedding2knn(clone_embedding,clone_k,if_self = TRUE)
   clone_knn@x = rep(1,length(clone_knn@x))
@@ -86,7 +119,7 @@ cell_knn_matrix_mutiplication = function(knn,cell_feature_mat,feature_feature_ma
 #' @importFrom Matrix rowSums
 cell_knn_matrix_multiplication_parallel <- function(knn, cell_feature_mat, feature_feature_mat, chunk_size = 5000) {
   # Convert to optimal formats
-  feature_feature_mat <- as(feature_feature_mat, "CsparseMatrix")
+  feature_feature_mat <- methods::as(feature_feature_mat, "CsparseMatrix")
   t_cell_feature <- t(cell_feature_mat)
 
   # Split indices into chunks

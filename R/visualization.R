@@ -25,7 +25,7 @@ connectivity_coord = function(coord,connectivity,dims = c(1,2)){
   coord$id = 1:nrow(coord)
 
   diag(connectivity) = 0
-  connectivity = as(connectivity, "sparseMatrix")
+  connectivity = methods::as(connectivity, "sparseMatrix")
   connectivity = as.data.frame(summary(connectivity))
   connectivity = left_join(connectivity,coord,by = c("i" = "id"))
   connectivity = left_join(connectivity,coord,by = c("j" = "id"))
@@ -95,7 +95,7 @@ dimplot = function(embedding, annot, color_by, alpha_by = NULL,connectivity = NU
     color = !!sym(color_by)
   )
   aes_full <- if (!is.null(alpha_by)) {
-    modifyList(aes_base, aes(alpha = !!sym(alpha_by)))
+    utils::modifyList(aes_base, aes(alpha = !!sym(alpha_by)))
   } else {
     aes_base
   }
@@ -118,7 +118,7 @@ dimplot = function(embedding, annot, color_by, alpha_by = NULL,connectivity = NU
     center_coord = embedding %>%
       group_by_at(color_by) %>%
       summarise(across(c(colnames(embedding)[1:2]), ~ median(.x, na.rm = TRUE)), count = n())
-    center_coord = na.omit(center_coord)
+    center_coord = stats::na.omit(center_coord)
 
     if (!is.null(connectivity)) {
       edge_coord = connectivity_coord(center_coord, connectivity,dims = c(2,3))

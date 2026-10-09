@@ -33,7 +33,7 @@ label_spreading <- function(adj, labels, label_n = NULL, alpha = 0.9, max_iter =
   C <- if (is.null(label_n)) max(labels, na.rm = TRUE) else label_n
 
   # Precompute label weights (log2(count)/count)
-  label_counts <- tabulate(na.omit(labels), nbins = C)
+  label_counts <- tabulate(stats::na.omit(labels), nbins = C)
   label_weights <- ifelse(label_counts > 0, log2(label_counts)/label_counts, 0)
 
   # Initialize Y matrix more efficiently
@@ -80,20 +80,41 @@ label_spreading <- function(adj, labels, label_n = NULL, alpha = 0.9, max_iter =
 }
 
 
-#' @title label_spreading_bootstrap
-#' @description Bootstrap-Based Stability Estimation for Label Propagation
+#' @title Bootstrap-Based Stability Estimation for Label Propagation
+#' @description Memory-conscious bootstrap stability estimation for label spreading
 #' @details
 #'
-#' Repeatedly applies `label_spreading()` on subsampled label sets to assess the stability or
-#' uncertainty of label propagation results. Returns a node-level deviance score indicating variability across bootstrap runs.
+#' Repeatedly applies label spreading to subsampled label sets and returns the
+#' full-label probability estimate together with a node-level bootstrap
+#' deviance. The default \code{backend = "blocked"} processes label classes in
+#' bounded blocks and streams intermediate matrices through HDF5. This avoids
+#' retaining a full cells-by-label matrix for every concurrent bootstrap.
+#'
+#' The blocked backend still returns one dense cells-by-label probability
+#' matrix for compatibility. Its peak memory therefore includes that final
+#' matrix, the sparse graph, and one class block per concurrent worker. Reduce
+#' the number of future workers when either the cell count or clone count is
+#' large. The former dense implementation remains available with
+#' \code{backend = "dense"} for small inputs and reproducibility checks.
 #'
 #' @inheritParams label_spreading
-#' @param refer Optional. A reference soft label matrix (N x C). If not provided, computed from full label set.
+#' @param refer Optional dense reference soft-label matrix (N x C). This legacy
+#'   argument is supported only by \code{backend = "dense"}. If supplied while
+#'   \code{backend} is omitted, the function selects the dense backend with a
+#'   warning.
 #' @param sample_rate Fraction of labeled nodes used in each bootstrap sample (default: 0.8).
 #' @param sample_n Number of bootstrap replicates (default: 50).
-#' @param ... Additional arguments passed to `label_spreading()`.
+#' @param backend Bootstrap implementation. The default is \code{"blocked"};
+#'   use \code{"dense"} only for small inputs or legacy reproduction.
+#' @param block_size Number of label classes processed in one HDF5-backed block.
+#' @param refer_h5 Optional reusable HDF5 reference for the blocked backend. A
+#'   caller-supplied file is never deleted by this function.
+#' @param tmpdir Directory for temporary HDF5 files used by the blocked backend.
+#' @param ... Additional arguments passed to \code{label_spreading()} when
+#'   \code{backend = "dense"}.
 #'
-#' @return A numeric vector of length N giving the deviance between each node's label probabilities and the reference across bootstraps.
+#' @return A list with \code{prob}, the full-reference probability matrix, and
+#'   \code{deviance}, the per-cell mean L1 bootstrap deviation.
 #'
 #' @importFrom future.apply future_lapply
 #' @importFrom Matrix rowSums
@@ -102,10 +123,67 @@ label_spreading <- function(adj, labels, label_n = NULL, alpha = 0.9, max_iter =
 #' adj <- Matrix::rsparsematrix(100, 100, density = 0.05)
 #' labels <- rep(NA, 100)
 #' labels[1:10] <- sample(1:3, 10, replace = TRUE)
-#' deviance_scores <- label_spreading_bootstrap(adj, labels)
+#' result <- label_spreading_bootstrap(adj, labels, block_size = 32)
+#' str(result)
 #' }
 #' @export
-label_spreading_bootstrap <- function(adj, labels,refer = NULL, alpha = 0.8, sample_rate = 0.8, sample_n = 50, ...) {
+label_spreading_bootstrap <- function(
+    adj, labels, refer = NULL, alpha = 0.8, sample_rate = 0.8,
+    sample_n = 50, backend = c("blocked", "dense"), block_size = 128,
+    tol = 1e-3, max_iter = 100, epsilon = 0, refer_h5 = NULL,
+    tmpdir = tempdir(), verbose = TRUE, ...
+) {
+  backend_was_missing <- missing(backend)
+  backend <- match.arg(backend)
+
+  if (!is.null(refer) && backend == "blocked") {
+    if (!backend_was_missing) {
+      stop(
+        "`refer` is a dense reference and requires `backend = \"dense\"`. ",
+        "Use `refer_h5` with the blocked backend."
+      )
+    }
+    warning(
+      "A dense `refer` matrix was supplied; using `backend = \"dense\"` ",
+      "for backward compatibility.",
+      call. = FALSE
+    )
+    backend <- "dense"
+  }
+
+  if (backend == "blocked") {
+    if (length(list(...))) {
+      stop(
+        "Unused arguments in `...` are not accepted by the blocked backend. ",
+        "Use the explicit blocked arguments or set `backend = \"dense\"`."
+      )
+    }
+    dir.create(tmpdir, recursive = TRUE, showWarnings = FALSE)
+    return(label_spreading_bootstrap_blocked(
+      adj = adj, labels = labels, alpha = alpha,
+      sample_rate = sample_rate, sample_n = sample_n,
+      block_size = block_size, tol = tol, max_iter = max_iter,
+      epsilon = epsilon, refer_h5 = refer_h5,
+      tmpdir = tmpdir, verbose = verbose
+    ))
+  }
+
+  if (!is.null(refer_h5)) {
+    stop("`refer_h5` is available only with `backend = \"blocked\"`.")
+  }
+  .label_spreading_bootstrap_dense(
+    adj = adj, labels = labels, refer = refer, alpha = alpha,
+    sample_rate = sample_rate, sample_n = sample_n,
+    tol = tol, max_iter = max_iter, epsilon = epsilon,
+    verbose = verbose, ...
+  )
+}
+
+.label_spreading_bootstrap_dense <- function(
+    adj, labels, refer = NULL, alpha = 0.8, sample_rate = 0.8,
+    sample_n = 50, tol = 1e-3, max_iter = 100, epsilon = 0,
+    verbose = TRUE, ...
+) {
   # estimate with all labels
   labels = as.numeric(as.factor(labels))
   if(is.null(refer)){
@@ -113,6 +191,9 @@ label_spreading_bootstrap <- function(adj, labels,refer = NULL, alpha = 0.8, sam
       adj = adj,
       labels = labels,
       alpha = alpha,
+      tol = tol,
+      max_iter = max_iter,
+      epsilon = epsilon,
       verbose = FALSE,
       ...
     )
@@ -143,7 +224,9 @@ label_spreading_bootstrap <- function(adj, labels,refer = NULL, alpha = 0.8, sam
       labels = subsampled_labels,
       label_n = label_n,
       alpha = alpha,
-      epsilon = 0,
+      tol = tol,
+      max_iter = max_iter,
+      epsilon = epsilon,
       verbose = FALSE,
       ...
     )
@@ -166,7 +249,7 @@ label_spreading_bootstrap <- function(adj, labels,refer = NULL, alpha = 0.8, sam
   deviance = deviance[,seq(1,ncol(deviance),2)]
   # deviance = rowMeans(deviance)
 
-  deviance_norm = rowSums(deviance*flag)/rowSums(flag)
+  deviance_norm = rowSums(deviance*flag)/pmax(1, rowSums(flag))
   return(list(prob = refer,deviance = deviance_norm))
 }
 
@@ -227,14 +310,14 @@ label_spreading_blocked <- function(
   N <- length(labs)
 
   # weights log2(count)/count computed over present classes in 1..C
-  cnt <- tabulate(na.omit(labs), nbins = C)
+  cnt <- tabulate(stats::na.omit(labs), nbins = C)
   wts <- numeric(C); nz <- which(cnt > 0L)
   if (length(nz)) wts[nz] <- log2(cnt[nz]) / cnt[nz]
 
   labeled_idx <- which(!is.na(labs))
 
   # Row-normalize adj in-place so it acts as P
-  adj <- as(adj, "dgCMatrix")
+  adj <- methods::as(adj, "dgCMatrix")
   deg <- Matrix::rowSums(adj); deg[deg < 1e-12] <- 1e-12
   adj@x <- adj@x / deg[adj@i + 1L]
 
@@ -380,6 +463,12 @@ normalize_hdf5_rows <- function(h5file, dataset = "prob", block_cols = 256, add_
 #' - Each bootstrap uses a random subset of labeled cells, writes its results to a temporary HDF5,
 #'   and accumulates the L1 deviation vs the reference in streaming mode.
 #' - Parallelizable via \pkg{future.apply}: set a plan before calling.
+#' - A reference created internally is removed on exit. A caller-supplied
+#'   \code{refer_h5} is treated as a cache and is preserved.
+#'
+#' Only intermediate class blocks are disk-backed. The returned \code{prob}
+#' matrix is dense for compatibility, so callers should still budget roughly
+#' \eqn{8NC} bytes for one final double-precision cells-by-label matrix.
 #'
 #' @param adj Sparse adjacency (\code{dgCMatrix}); will be row-normalized.
 #' @param labels Vector of original labels (length \eqn{N}); mapped once to \code{1..C}.
@@ -430,14 +519,20 @@ label_spreading_bootstrap_blocked <- function(
     tmpdir = tempdir(),
     verbose = TRUE
 ) {
+  if (!dir.exists(tmpdir)) {
+    dir.create(tmpdir, recursive = TRUE, showWarnings = FALSE)
+  }
+
   # Preindex ONCE from the full labels; keep this mapping fixed
   labs_full <- as.integer(as.factor(labels))
   N <- length(labs_full)
   C <- max(labs_full, na.rm = TRUE)
 
   # Build or reuse reference (normalized, aligned to 1..C)
-  if (is.null(refer_h5)) {
+  owns_reference <- is.null(refer_h5)
+  if (owns_reference) {
     refer_h5 <- file.path(tmpdir, sprintf("refer_%s.h5", paste0(sample(letters, 6), collapse = "")))
+    on.exit(try(unlink(refer_h5), silent = TRUE), add = TRUE)
     if (verbose) message("Computing reference (exact, preindexed), then global normalize")
     label_spreading_blocked(
       adj, labs_full, label_n = C, alpha = alpha,
@@ -465,6 +560,7 @@ label_spreading_bootstrap_blocked <- function(
     same_flag <- as.integer(!xor(full_flag, samp_flag))
 
     tmp_h5 <- file.path(tmpdir, sprintf("boot_%04d_%s.h5", i, paste0(sample(letters, 4), collapse = "")))
+    on.exit(try(unlink(tmp_h5), silent = TRUE), add = TRUE)
     create_hdf5_matrix(tmp_h5, "prob", nrow = N, ncol = C, chunk_rows = 4096, chunk_cols = block_size)
 
     # Run exact solver with preindexed labels (no refactor)
@@ -501,8 +597,6 @@ label_spreading_bootstrap_blocked <- function(
   deviance_norm <- dev_sum / pmax(1, flag_sum)
 
   prob = h5read(refer_h5,"prob")
-
-  try(unlink(refer_h5), silent = TRUE)
 
   list(prob = prob, deviance = deviance_norm)
 }

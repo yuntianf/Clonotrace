@@ -8,8 +8,27 @@ vignette: >
 ---
 
 
-```{r}
+```{r setup, include=FALSE}
 options(future.globals.maxSize = 4 * 1024^3)
+
+demo_data_path <- Sys.getenv(
+  "CLONOTRACE_DEMO_DATA",
+  unset = "../../hematopoiesis.rds"
+)
+demo_data_available <- file.exists(demo_data_path)
+
+knitr::opts_chunk$set(
+  eval = demo_data_available,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center"
+)
+
+cached_demo_figure <- function(filename) {
+  path <- system.file("extdata", "demo_files", filename, package = "Clonotrace")
+  if (!nzchar(path)) stop("Bundled vignette figure not found: ", filename)
+  path
+}
 ```
 
 ```{r}
@@ -60,8 +79,10 @@ Throughout this vignette, we assume that the embedding has already been computed
 
 We begin by loading an example dataset. The example data is from a public in vitro longitudinal experiment to monitor the hematopoiesis (https://www.science.org/doi/10.1126/science.aaw3381). You can download the demo data from: https://upenn.box.com/s/x099vybef0qop0cljbuan89x5jqvgnwx
 
+The full dataset is intentionally not bundled with the package. To rerun this tutorial, set the `CLONOTRACE_DEMO_DATA` environment variable to the downloaded RDS file. When that file is unavailable during package-site construction, the code remains visible and the vignette displays the validated figures from the published analysis.
+
 ```{r}
-seurat_object = readRDS("../../hematopoiesis.rds")
+seurat_object = readRDS(demo_data_path)
 ```
 
 ```{r}
@@ -87,6 +108,10 @@ xlab("UMAP 1")+ylab("UMAP 2")
 cell_type_umap
 ```
 
+```{r cached-cell-type-umap, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_10_0.png"))
+```
+
 For a higher resolution in the downstream analysis, we further cluster cells into 9 cell clusters.
 
 ```{r}
@@ -96,6 +121,10 @@ theme(axis.text = element_blank(),
       axis.ticks = element_blank())+
 xlab("UMAP 1")+ylab("UMAP 2")
 cell_cluster_umap
+```
+
+```{r cached-cell-cluster-umap, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_12_0.png"))
 ```
 
 ### clone label spreading
@@ -124,6 +153,10 @@ ylab("clone count")
 clone_size_hist
 ```
 
+```{r cached-clone-size-histogram, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_18_0.png"))
+```
+
 Then we could spread the clone label in the cell graph to smooth the cell density in those expanding clones. There is a bootstrap during this process to filter out propagations with high deviance, usually in regions with high density of lowly expanded or non-expanded clones. So it's better to run this in parallel.
 
 ```{r}
@@ -133,9 +166,11 @@ cell_clone = data.frame(cell = rownames(cell_meta),clone = cell_meta[,"clone"]) 
 
 ```{r}
 start = Sys.time()
-plan(multisession,workers = 8)
+plan(multisession,workers = 2)
 clone_labels = label_spreading_bootstrap(adj = cell_knn,labels = cell_clone$clone,
-                                              alpha = 0.6, sample_rate = 0.8,sample_n = 48)
+                                         alpha = 0.6, sample_rate = 0.8,
+                                         sample_n = 48, backend = "blocked",
+                                         block_size = 128)
 end = Sys.time()
 print(end-start)
 ```
@@ -162,6 +197,10 @@ ylab("cell count")
 deviance_hist
 ```
 
+```{r cached-deviance-histogram, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_24_0.png"))
+```
+
 We can visualize the deviance of clone label spreading in each cell via cell UMAP, and here we use the 0.3 as the upper bound threshold for deviance. Cells with high deviance are enriched in undifferentiated cells.
 
 ```{r}
@@ -176,6 +215,10 @@ theme(axis.text = element_blank(),
       axis.ticks = element_blank())+
 ggtitle("Cells with high deviance")
 deviance_umap
+```
+
+```{r cached-deviance-umap, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_27_0.png"))
 ```
 
 Then we filter out cells with high deviance, and sparsify the cell-to-clone probability by keeping top 90% mass
@@ -218,6 +261,10 @@ theme(axis.text = element_blank(),
 clone_example_umap_raw
 ```
 
+```{r cached-raw-clone-example, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_35_0.png"))
+```
+
 And after label propagation, its cell distribution becomes more continous.
 
 ```{r}
@@ -242,22 +289,35 @@ clone_example_umap_smooth = ggrastr::rasterize(clone_example_umap_smooth,layers=
 clone_example_umap_smooth
 ```
 
+```{r cached-smoothed-clone-example, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_38_0.png"))
+```
+
 ### Clonewise transcriptomic distance
 
 After we smooth the cell density for each expanded clone over the cell transcriptomic embedding, we can measure their cell distributional difference via optimal transportation distance. 
 
-We provide two methods for this, the first one calculates the exact optimal transportation distance, and the second one is a faster approximation, but less accurate. You can switch the modes by the `exact` parameter in the `clone_disance` function.
+We provide two methods for this: exact optimal transport and a faster nearest-neighbor approximation. In Clonotrace 1.2.1, exact OT uses a disk-backed, checkpointed implementation by default, which reduces peak memory without changing the distance definition. The published Figure 4 analysis used the original unadjusted distance, so `revised = FALSE` is specified explicitly below.
 
 ```{r,eval = FALSE}
 # not run
-plan(multisession, workers = 8)
+plan(multisession, workers = 2)
 ### exact OT distance
-clone_dis = clone_disance(as.matrix(pca),cell_clone_prob,outpath = "./",exact = TRUE, cores = 8)
+clone_dis = clone_disance(
+  as.matrix(pca), cell_clone_prob, outpath = "./",
+  exact = TRUE, exact_backend = "disk", force_exact = TRUE,
+  revised = FALSE, cores = 2, distance_block_size = 256,
+  target_cell_limit = 5000,
+  checkpoint_dir = "./exact_ot_checkpoints"
+)
 ### nearest neighbor distance approximation
-clone_dis = clone_disance(as.matrix(pca),cell_clone_prob,outpath = "./",exact = FALSE)
+clone_dis = clone_disance(
+  as.matrix(pca), cell_clone_prob, outpath = "./",
+  exact = FALSE, revised = FALSE
+)
 ```
 
-This step is time and memory consuming, which can take hours even with the approximation. We strongly recommend to put this step in a server or cluster and run it with multiple cores. (As a reference, the approximation method takes 40 minutes to run on the HPC paralleled with 4 cores using 8 Gb RAM).
+This step can still take hours on a large dataset. The exact calculation writes the cell-distance store and completed clone pairs to disk, so an interrupted run can resume from the same output and checkpoint directories. Increase the number of workers only after confirming that sufficient memory remains available.
 
 Here for time efficiency, we can use the pre-computed clone-wise distance for downstream applications.
 
@@ -301,6 +361,10 @@ xlab("UMAP 1")+ylab("UMAP 2")
 clone_leiden_umap
 ```
 
+```{r cached-clone-umap, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_50_0.png"))
+```
+
 We can also visualize the clone embedding in other low dimension reductions like a diffusion map:
 
 ```{r}
@@ -329,6 +393,10 @@ guides(fill = "none",size = guide_legend(title = "log2(mass)"))+
 theme(legend.position = "bottom")+
 xlab("dm 1")+ylab("dm 2")
 clone_leiden_diffmap
+```
+
+```{r cached-clone-diffusion-map, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_54_0.png"))
 ```
 
 Diffusion map is good to layout continuous movement of clones over time. Here we can mark how clones with the same lineage barcodes change across time.
@@ -384,6 +452,10 @@ guides(fill = guide_legend(override.aes = list(size=5)),
 clone_leiden_diffmap_arrow
 ```
 
+```{r cached-lineage-arrows, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_61_0.png"))
+```
+
 From the diffusion map we can see an organized clonal shift from day4 to day6.
 
 ### profile projection in cell embedding
@@ -430,6 +502,10 @@ theme(axis.text = element_blank(),
 xlab("UMAP 1")+ylab("UMAP 2")+
 guides(alpha = "none",color = guide_legend(override.aes = list(size=5)))
 cell_profile_umap
+```
+
+```{r cached-profile-projection, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_70_0.png"))
 ```
 
 Obvisouly, profile 5 and 6 unipotently differentiate to monocytes and profile 3 and 7 unipotently differentiate to netriphil, while profile 1 and 4 denote the bipotent differenitation.
@@ -482,6 +558,10 @@ xlab("dm 1")+ylab("dm 2")
 clone_dpt_diffmap
 ```
 
+```{r cached-clone-pseudotime, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_80_0.png"))
+```
+
 Then we can smooth the clone level pseudotime over the cell embedding by multiplying the clone pseudotime to cell clone probability. The pseudotime inference is necessary for the fate driving gene detection in the downstream analysis. 
 
 ```{r}
@@ -499,6 +579,10 @@ scale_color_viridis_c(name = "cell t")
 cell_dpt_umap
 ```
 
+```{r cached-cell-pseudotime, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_83_0.png"))
+```
+
 ### clone weighted cell embedding (optional)
 
 By integrating information from both the clone embedding and the cell embedding, we developed a new visualization method called clone-weighted cell embedding. In this representation, even if two cells are close in the transcriptomic (cell) embedding, they will be pulled apart in the clone-weighted embedding if their corresponding clones are distant in clone space. This embedding can better illustrate the clone level heterogeneity.
@@ -510,24 +594,24 @@ cell_embedding = pca[rownames(cell_clone_prob),]
 ```
 
 ```{r}
-plan(multisession, workers = 8)
-coembed_dis = cell_clone_coembed(cell_embedding,clone_embedding)
+plan(multisession, workers = 2)
+coembed_dis = cell_clone_coembed(
+  cell_embedding, clone_embedding, cell_clone_prob,
+  cell_k = cell_k, clone_k = clone_k
+)
 ```
 
 This function `cell_clone_coembed` would return a sparse distance matrix, which denotes a weighted kNN network between cells. We can project this kNN network to UMAP for visualization. This step requires a python script.
 
 ```{r}
-# set you python path
+# Optionally set RETICULATE_PYTHON before starting R.
 library(reticulate)
-use_python("~/softwares/anaconda3/envs/py3.8/bin/python")
+python_path <- Sys.getenv("RETICULATE_PYTHON")
+if (nzchar(python_path)) use_python(python_path, required = TRUE)
 ```
 
 ```{r}
 script_path <- system.file("py", "embedding_from_kNN.py", package = "Clonotrace")
-source_python(script_path)
-```
-
-```{r}
 source_python(script_path)
 ```
 
@@ -545,6 +629,10 @@ NoLegend()
 coembed_umap_cluster
 ```
 
+```{r cached-coembedding-clusters, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_92_0.png"))
+```
+
 Obviously, there appear two boundaries within the two branches for monocytes (cluster 4, 3, 5) and neutriphils (cluster 1, 6, 7), which denote the clone level heterogeneity. Once we colored cells by the profile identity, we can see the two boundaries seperate the bipotent and unipotent profiles.
 
 ```{r}
@@ -555,6 +643,10 @@ theme(axis.text = element_blank(),    # Remove axis numbers (labels)
 xlab("UMAP 1")+ylab("UMAP 2")+
 NoLegend()
 coembed_umap_profile
+```
+
+```{r cached-coembedding-profiles, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_94_0.png"))
 ```
 
 ### profile enrichment in each cluster
@@ -594,6 +686,10 @@ theme_classic()+
 xlab("cell cluster")+
 ylab("clone profile")
 cell_type_profile_enrich_heatmap
+```
+
+```{r cached-profile-enrichment, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_102_0.png"))
 ```
 
 From the heatmap we can see that our target profile 1 is enriched in 4 cell clusters, including 1, 3, 4 and 8, within which cluster 1 and 4 are at early differentiation stage. Here, as an example, we will identify genes differentially expressed in profile 1 in cluster 4.
@@ -662,6 +758,10 @@ gene_fit_cluster = ggplot(cell_meta[test_object$cell,])+
 gene_fit_cluster
 ```
 
+```{r cached-gene-fit, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_117_0.png"))
+```
+
 We can further visualize the expression for `Dmkn` over the cell UMAP:
 
 ```{r}
@@ -674,6 +774,10 @@ theme(axis.text = element_blank(),    # Remove axis numbers (labels)
 ggtitle(example_gene)+
 xlab("UMAP 1")+ylab("UMAP 2")
 feature_scatter
+```
+
+```{r cached-gene-umap, eval=TRUE, echo=FALSE}
+if (!demo_data_available) knitr::include_graphics(cached_demo_figure("demo_119_0.png"))
 ```
 
 Obviously, this `Dmkn` gene shows higher expression in the bipotent profile no matter in monocyte or neutriphil.

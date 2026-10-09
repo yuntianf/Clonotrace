@@ -1,0 +1,86 @@
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+name: R package checks
+
+permissions:
+  contents: read
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (R ${{ matrix.config.r }})
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: windows-latest, r: release}
+          - {os: macos-latest, r: release}
+          - {os: ubuntu-latest, r: release}
+          - {os: ubuntu-latest, r: devel}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          build_args: 'c("--no-manual")'
+
+  clean-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pak, any::testthat
+          needs: check
+      - name: Build source package
+        run: R CMD build --no-manual .
+      - name: Install built artifact into an empty library
+        shell: Rscript {0}
+        run: |
+          tarball <- list.files(pattern = "^Clonotrace_.*[.]tar[.]gz$", full.names = TRUE)
+          clean_library <- tempfile("clonotrace-library-")
+          dir.create(clean_library)
+          pak::local_install(tarball, lib = clean_library, dependencies = TRUE)
+          .libPaths(c(clean_library, .libPaths()))
+          testthat::test_local(".", package = "Clonotrace")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Clonotrace-source-package
+          path: Clonotrace_*.tar.gz
+
+  BiocCheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: bioc::BiocCheck
+          needs: check
+      - name: Run Bioconductor-specific checks
+        shell: Rscript {0}
+        run: BiocCheck::BiocCheck(".", `quit-with-status` = TRUE)

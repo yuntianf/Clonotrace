@@ -1,3 +1,109 @@
+.clonotrace_numeric_signature <- function(x) {
+  values <- if (inherits(x, "Matrix")) x@x else as.numeric(x)
+  finite <- values[is.finite(values)]
+  c(
+    length = length(values),
+    finite = length(finite),
+    sum = if (length(finite)) sum(finite) else 0,
+    abs_sum = if (length(finite)) sum(abs(finite)) else 0,
+    sum_squares = if (length(finite)) sum(finite^2) else 0,
+    min = if (length(finite)) min(finite) else NA_real_,
+    max = if (length(finite)) max(finite) else NA_real_
+  )
+}
+
+.clonotrace_input_signature <- function(x) {
+  list(
+    class = class(x),
+    dim = dim(x),
+    rownames = rownames(x),
+    colnames = colnames(x),
+    numeric = .clonotrace_numeric_signature(x)
+  )
+}
+
+.clonotrace_atomic_save_rds <- function(object, path) {
+  temporary <- tempfile(pattern = paste0(basename(path), "."), tmpdir = dirname(path))
+  on.exit(unlink(temporary), add = TRUE)
+  saveRDS(object, temporary)
+  if (file.exists(path) && !file.remove(path)) {
+    stop("Unable to replace existing checkpoint: ", path)
+  }
+  if (!file.rename(temporary, path)) {
+    stop("Unable to atomically write checkpoint: ", path)
+  }
+  invisible(path)
+}
+
+.clonotrace_read_cache <- function(path, expected, label) {
+  cached <- tryCatch(readRDS(path), error = function(error) {
+    stop("Unable to read ", label, " checkpoint `", path, "`: ", conditionMessage(error))
+  })
+  if (!is.list(cached) || !all(c("metadata", "value") %in% names(cached))) {
+    warning(
+      "Loading legacy ", label, " checkpoint without validation metadata. ",
+      "Use `overwrite = TRUE` once to replace it with a validated checkpoint.",
+      call. = FALSE
+    )
+    return(cached)
+  }
+  if (!identical(cached$metadata, expected)) {
+    stop(
+      "The existing ", label, " checkpoint does not match the current inputs or parameters. ",
+      "Use a different `outpath` or set `overwrite = TRUE` to recompute it."
+    )
+  }
+  cached$value
+}
+
+.clonotrace_snn_similarity_to_cost <- function(graph) {
+  similarity <- as.numeric(igraph::edge_attr(graph, "weight"))
+  if (length(similarity) != igraph::ecount(graph) ||
+      any(!is.finite(similarity)) || any(similarity < 0)) {
+    stop("SNN edge weights must be finite, non-negative similarities.")
+  }
+
+  # `set_edge_attr()` returns the modified graph; it does not mutate `graph`.
+  graph <- igraph::set_edge_attr(
+    graph,
+    "weight",
+    value = exp(-similarity)
+  )
+  graph
+}
+
+.clonotrace_normalize_distance_result <- function(result, clone_names) {
+  result <- as.data.frame(result, stringsAsFactors = FALSE)
+  required <- c("group1", "group2", "dis")
+  if (!all(required %in% colnames(result))) {
+    stop("Clone-distance output must contain columns: group1, group2, and dis.")
+  }
+  result <- result[, required, drop = FALSE]
+  normalize_ids <- function(ids) {
+    ids_character <- as.character(ids)
+    ids_integer <- suppressWarnings(as.integer(ids_character))
+    positional <- !anyNA(ids_integer) && all(ids_integer >= 1L & ids_integer <= length(clone_names))
+    if (positional) ids_character <- clone_names[ids_integer]
+    if (!all(ids_character %in% clone_names)) {
+      stop("Clone-distance output contains identifiers absent from `cell_clone_prob`.")
+    }
+    ids_character
+  }
+  result$group1 <- normalize_ids(result$group1)
+  result$group2 <- normalize_ids(result$group2)
+  result$dis <- as.numeric(result$dis)
+  if (any(is.infinite(result$dis))) {
+    stop(
+      "Clone-distance output contains infinite distances because the cell graph has disconnected clone-bearing components. ",
+      "Increase `graph_k`, inspect/filter disconnected components, or provide an embedding that yields a connected graph."
+    )
+  }
+  if (anyNA(result$dis) || any(result$dis < 0)) {
+    stop("Clone-distance output contains missing or negative distance values.")
+  }
+  result
+}
+
 #' @title clone_disance
 #' @description Compute Clone-to-Clone Distances from Cell Embedding and Clone Assignments
 #' @details
@@ -11,55 +117,277 @@
 #' @param outpath File path to save and load intermediate graph and distance results.
 #' @param graph_k Integer. Number of neighbors to use in the SNN graph (default: 10).
 #' @param overwrite Logical. Whether to overwrite previously saved graphs and results (default: FALSE).
-#' @param exact Logical. If `TRUE`, computes exact OT-based clone distances; otherwise, uses approximate NN (default: FALSE).
-#' @param ... Additional arguments passed to `graph_clone_ot()` or `graph_clone_nn()`.
+#' @param exact Logical. If `TRUE`, computes exact OT-based clone distances with
+#'   the disk-backed backend by default; otherwise, uses approximate NN
+#'   (default: FALSE).
+#' @param exact_backend Exact-OT implementation. `"disk"` (default) writes a
+#'   resumable cell-distance store and reads bounded cost blocks. `"memory"`
+#'   retains the legacy dense in-memory implementation for small reproductions.
+#' @param force_exact Logical. Allow exact mode to proceed when the input exceeds
+#'   the conservative cell or clone safety limits (default: `FALSE`).
+#' @param exact_cell_limit,exact_clone_limit Conservative safety limits used to
+#'   warn before an exact calculation that is likely to require substantial
+#'   runtime or memory.
+#' @param revised Logical. If `TRUE` (the default), optionally locally rescales
+#'   the raw Clonotrace distance and blends it with clone-centroid distance
+#'   using a fate-blind automatically selected weight; see
+#'   `revise_clone_distance()`. Local rescaling is off by default and can be
+#'   enabled with `local_rescale = TRUE`.
+#'   Set `FALSE` to return the original exact-OT or approximate distance.
+#' @param clone_labels Optional observed clone membership used for clone
+#'   centroids, as a data frame with columns `cell` and `clone`, or a vector
+#'   named by cell. If `NULL`, `cell_clone_prob` supplies probability weights.
+#' @param sample Optional clone-level grouping, such as patient, passed to
+#'   `revise_clone_distance()` so normalization and weight selection use
+#'   within-group clone pairs.
+#' @param ... Named arguments passed to `graph_clone_ot()` or
+#'   `graph_clone_nn()`, and—when `revised = TRUE`—to
+#'   `revise_clone_distance()` (`local_k`, `local_rescale`, `resolutions`, `clusters`,
+#'   `cluster_k`, `mean_weight`, `s_grid`, `seed`, and `verbose`).
 #'
-#' @return A data frame with columns `group1`, `group2`, and `dis`, representing pairwise clone distances.
+#' @return A data frame with columns `group1`, `group2`, and `dis`. With
+#'   `revised = TRUE`, `dis` is the revised distance, `dis_clonotrace` retains
+#'   the raw distance, and attributes `mean_weight` and `picks` record the
+#'   automatic blend. With `revised = FALSE`, `dis` is the raw distance.
 #' @importFrom  bluster makeSNNGraph
 #' @importFrom igraph edge_attr
 #' @importFrom igraph set_edge_attr
+#' @importFrom utils packageVersion
 #' @export
 clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
-                         overwrite = FALSE,exact = FALSE,...){
+                         overwrite = FALSE, exact = FALSE, force_exact = FALSE,
+                         exact_cell_limit = 20000L, exact_clone_limit = 500L,
+                         exact_backend = c("disk", "memory"),
+                         revised = TRUE, clone_labels = NULL, sample = NULL, ...){
+  if (!is.character(outpath) || length(outpath) != 1L || is.na(outpath) || outpath == "") {
+    stop("`outpath` must be one non-empty directory path.")
+  }
+  if (!dir.exists(outpath) && !dir.create(outpath, recursive = TRUE, showWarnings = FALSE)) {
+    stop("Unable to create `outpath`: ", outpath)
+  }
+  write_probe <- tempfile(pattern = ".clonotrace-write-test-", tmpdir = outpath)
+  if (!file.create(write_probe)) stop("`outpath` is not writable: ", outpath)
+  unlink(write_probe)
+  if (!is.numeric(graph_k) || length(graph_k) != 1L || is.na(graph_k) || graph_k < 1L) {
+    stop("`graph_k` must be one positive integer.")
+  }
+  graph_k <- as.integer(graph_k)
+  exact <- isTRUE(exact)
+  exact_backend <- match.arg(exact_backend)
+  overwrite <- isTRUE(overwrite)
+  revised <- isTRUE(revised)
+
+  args <- list(...)
+  distance_args_allowed <- if (exact && identical(exact_backend, "disk")) {
+    c(
+      "prob_thresh", "cores", "distance_block_size", "target_cell_limit",
+      "checkpoint_dir", "monitor", "verbose"
+    )
+  } else if (exact) {
+    c("prob_thresh", "cores", "cache", "verbose")
+  } else {
+    c("prob_thresh", "k", "clone_block_size", "verbose")
+  }
+  revision_args_allowed <- c(
+    "local_k", "local_rescale", "resolutions", "clusters", "cluster_k", "mean_weight",
+    "s_grid", "seed", "verbose"
+  )
+  allowed_args <- union(
+    distance_args_allowed,
+    if (revised) revision_args_allowed else character()
+  )
+  unknown_args <- setdiff(names(args), allowed_args)
+  if (length(args) > 0L && (is.null(names(args)) || any(names(args) == ""))) {
+    stop("All additional arguments in `...` must be named.")
+  }
+  if (length(unknown_args) > 0L) {
+    stop(
+      "Unknown or inapplicable argument(s) for ", if (exact) "exact" else "approximate",
+      if (revised) " revised" else " unrevised", " mode: ",
+      paste(unknown_args, collapse = ", "), "."
+    )
+  }
+  distance_args <- args[names(args) %in% distance_args_allowed]
+  revision_args <- args[names(args) %in% revision_args_allowed]
+
+  if (is.null(rownames(embedding)) || is.null(rownames(cell_clone_prob)) ||
+      is.null(colnames(cell_clone_prob))) {
+    stop("`embedding` and `cell_clone_prob` must use cell row names; clone columns must also be named.")
+  }
+  if (anyDuplicated(rownames(embedding)) || anyDuplicated(rownames(cell_clone_prob)) ||
+      anyDuplicated(colnames(cell_clone_prob))) {
+    stop("Cell and clone identifiers must be unique.")
+  }
   cells = intersect(rownames(embedding),rownames(cell_clone_prob))
+  missing_membership <- setdiff(rownames(embedding), rownames(cell_clone_prob))
+  if (length(missing_membership) > 0L) {
+    stop(
+      "`cell_clone_prob` is missing ", length(missing_membership),
+      " cell(s) present in `embedding`; supply aligned inputs."
+    )
+  }
   if(length(setdiff(rownames(cell_clone_prob),cells)) > 0){
     warning("The cell_clone_prob has cells which are not in the cell embedding, those cells would be removed!")
   }
 
   embedding = as.matrix(embedding)
+  if (!is.numeric(embedding) || any(!is.finite(embedding))) {
+    stop("`embedding` must be a finite numeric matrix.")
+  }
   cell_clone_prob = sync_sparse_rows(cell_clone_prob,rownames(embedding))
+  membership_values <- if (inherits(cell_clone_prob, "Matrix")) cell_clone_prob@x else as.numeric(cell_clone_prob)
+  if (any(!is.finite(membership_values)) || any(membership_values < 0)) {
+    stop("`cell_clone_prob` must contain finite, non-negative values.")
+  }
+  if (any(Matrix::colSums(cell_clone_prob) <= 0)) {
+    stop("Every clone column in `cell_clone_prob` must have positive total mass.")
+  }
+  if (nrow(embedding) <= graph_k) {
+    stop("`graph_k` must be smaller than the number of cells.")
+  }
+  if (exact && !isTRUE(force_exact) &&
+      (nrow(embedding) > exact_cell_limit || ncol(cell_clone_prob) > exact_clone_limit)) {
+    stop(
+      "Exact clone distance was requested for ", nrow(embedding), " cells and ",
+      ncol(cell_clone_prob), " clones, above the conservative safety limits (",
+      exact_cell_limit, " cells / ", exact_clone_limit, " clones). ",
+      "Use approximate mode (`exact = FALSE`) or set `force_exact = TRUE` after confirming resources."
+    )
+  }
 
-  if(file.exists(file.path(outpath,"cell_graph.rds")) & !overwrite){
-    cat("The cell_graph is already calculated and overwrite is not allowed, will use the exsting one!\n")
-    cell_graph = readRDS(file.path(outpath,"cell_graph.rds"))
+  graph_metadata <- list(
+    format_version = 2L,
+    package_version = tryCatch(as.character(utils::packageVersion("Clonotrace")), error = function(error) NA_character_),
+    embedding = .clonotrace_input_signature(embedding),
+    graph_k = graph_k,
+    edge_cost_transform = "exp(-shared_neighbor_count)"
+  )
+  graph_path <- file.path(outpath, "cell_graph.rds")
+
+  if(file.exists(graph_path) && !overwrite){
+    message("Reusing cell-graph checkpoint: ", graph_path)
+    cell_graph = .clonotrace_read_cache(graph_path, graph_metadata, "cell graph")
   }
   else{
-    cell_graph = makeSNNGraph(embedding,k = graph_k,type="number")
-    # cell_graph = delete.edges(cell_graph, E(cell_graph)[edge_attr(cell_graph)$weight < weight])
-    # edge_attr(cell_graph)$weight = exp(-edge_attr(cell_graph)$weight)
-    w <- igraph::edge_attr(cell_graph, "weight")
-    igraph::set_edge_attr(cell_graph, "weight", value = exp(-w))
-    saveRDS(cell_graph,file.path(outpath,"cell_graph.rds"))
+    message("Computing cell graph (k = ", graph_k, ").")
+    cell_graph = bluster::makeSNNGraph(embedding,k = graph_k,type="number")
+    cell_graph <- .clonotrace_snn_similarity_to_cost(cell_graph)
+    .clonotrace_atomic_save_rds(list(metadata = graph_metadata, value = cell_graph), graph_path)
   }
 
-  if(file.exists(file.path(outpath,"clone_graph_dis.rds")) & !overwrite){
-    cat("The groups_graph is already calculated and overwrite is not allowed, will use the exsting one!\n")
-    dis_result = readRDS(file.path(outpath,"groups_graph_dis.rds"))
+  result_metadata <- list(
+    format_version = 1L,
+    package_version = graph_metadata$package_version,
+    graph = graph_metadata,
+    cell_clone_prob = .clonotrace_input_signature(cell_clone_prob),
+    method = if (exact) paste0("exact_", exact_backend) else "approximate",
+    arguments = distance_args
+  )
+  result_filename <- if (exact) "clone_graph_dis_exact.rds" else "clone_graph_dis.rds"
+  result_path <- file.path(outpath, result_filename)
+
+  if(file.exists(result_path) && !overwrite){
+    message("Reusing clone-distance checkpoint: ", result_path)
+    dis_result = .clonotrace_read_cache(result_path, result_metadata, "clone distance")
+    dis_result = .clonotrace_normalize_distance_result(dis_result, colnames(cell_clone_prob))
   }
   else{
-    args <- list(...)
-    if(exact == TRUE){
+    message("Computing ", if (exact) "exact" else "approximate", " clone distances.")
+    if(exact == TRUE && identical(exact_backend, "disk")){
+      prob_thresh <- if (is.null(distance_args$prob_thresh)) 0.05 else distance_args$prob_thresh
+      if (!is.numeric(prob_thresh) || length(prob_thresh) != 1L ||
+          is.na(prob_thresh) || prob_thresh < 0) {
+        stop("`prob_thresh` must be one non-negative numeric value.")
+      }
+      positive <- if (prob_thresh == 0) cell_clone_prob > 0 else cell_clone_prob >= prob_thresh
+      clone_cells <- rownames(cell_clone_prob)[Matrix::rowSums(positive) > 0]
+      if (length(clone_cells) < 2L) {
+        stop("At least two cells must retain clone mass after thresholding.")
+      }
+
+      distance_block_size <- if (is.null(distance_args$distance_block_size)) {
+        256L
+      } else {
+        distance_args$distance_block_size
+      }
+      target_cell_limit <- if (is.null(distance_args$target_cell_limit)) {
+        5000L
+      } else {
+        distance_args$target_cell_limit
+      }
+      checkpoint_dir <- if (is.null(distance_args$checkpoint_dir)) {
+        file.path(outpath, "exact_ot_checkpoints")
+      } else {
+        distance_args$checkpoint_dir
+      }
+      cores <- if (is.null(distance_args$cores)) 1L else distance_args$cores
+      monitor <- isTRUE(distance_args$monitor)
+      verbose <- if (is.null(distance_args$verbose)) TRUE else isTRUE(distance_args$verbose)
+
+      distance_store <- build_graph_distance_store(
+        graph = cell_graph,
+        path = file.path(outpath, "cell_graph_distance_exact.bin"),
+        cells = clone_cells,
+        cell_ids = rownames(embedding),
+        block_size = distance_block_size,
+        overwrite = overwrite,
+        verbose = verbose
+      )
+      dis_result <- graph_clone_ot_disk(
+        store = distance_store,
+        cell_clone_prob = cell_clone_prob[clone_cells, , drop = FALSE],
+        prob_thresh = prob_thresh,
+        target_cell_limit = target_cell_limit,
+        cores = cores,
+        checkpoint_dir = checkpoint_dir,
+        overwrite_checkpoint = overwrite,
+        monitor = monitor,
+        verbose = verbose
+      )
+    }
+    else if(exact == TRUE){
       ot_args <- c("prob_thresh","cores", "cache","verbose")
-      call_args <- args[names(args) %in% ot_args]
+      call_args <- distance_args[names(distance_args) %in% ot_args]
       dis_result <- do.call(graph_clone_ot, c(list(graph = cell_graph, cell_clone_prob = cell_clone_prob), call_args))
     }
     else{
-      nn_args <- c("prob_thresh","k","verbose")
-      call_args <- args[names(args) %in% nn_args]
+      nn_args <- c("prob_thresh", "k", "clone_block_size", "verbose")
+      call_args <- distance_args[names(distance_args) %in% nn_args]
       dis_result <- do.call(graph_clone_nn, c(list(graph = cell_graph, cell_clone_prob = cell_clone_prob), call_args))
     }
 
-    saveRDS(dis_result,file.path(outpath,"clone_graph_dis.rds"))
+    dis_result <- .clonotrace_normalize_distance_result(dis_result, colnames(cell_clone_prob))
+    .clonotrace_atomic_save_rds(list(metadata = result_metadata, value = dis_result), result_path)
+  }
+
+  if (revised) {
+    revised_distance <- do.call(
+      revise_clone_distance,
+      c(
+        list(
+          clone_dis = dis_result,
+          embedding = embedding,
+          clone_labels = clone_labels,
+          cell_clone_prob = cell_clone_prob,
+          clone_names = colnames(cell_clone_prob),
+          sample = sample
+        ),
+        revision_args
+      )
+    )
+    result <- as.data.frame(dis_result, stringsAsFactors = FALSE)
+    first <- match(as.character(result$group1), colnames(cell_clone_prob))
+    second <- match(as.character(result$group2), colnames(cell_clone_prob))
+    if (anyNA(first) || anyNA(second)) {
+      stop("Raw clone-distance identifiers could not be matched during revision.")
+    }
+    result$dis_clonotrace <- result$dis
+    result$dis <- revised_distance[cbind(first, second)]
+    attr(result, "mean_weight") <- attr(revised_distance, "mean_weight")
+    attr(result, "picks") <- attr(revised_distance, "picks")
+    attr(result, "selection_correlations") <-
+      attr(revised_distance, "selection_correlations")
+    dis_result <- result
   }
 
   return(dis_result)
@@ -308,6 +636,9 @@ clone_2_ot = function(distance,group1_mass,group2_mass){
 #' @param cell_clone_prob A numeric matrix of clone membership probabilities (cells × clones).
 #' @param prob_thresh Threshold for binarizing clone assignment probabilities (default: 0.1).
 #' @param k Integer. Number of nearest neighbors to select for each clone comparison (default: 2).
+#' @param clone_block_size Integer. Number of target clones whose cells are
+#'   included in each graph-distance block. Smaller values reduce peak memory
+#'   at the cost of additional graph-distance calls (default: 25).
 #' @param verbose Logical. Whether to print progress during processing (default: FALSE).
 #'
 #' @return A data frame with columns `group1`, `group2`, and `dis` indicating the NN distance between clones.
@@ -316,13 +647,31 @@ clone_2_ot = function(distance,group1_mass,group2_mass){
 #' @importFrom igraph distances
 #'
 #' @export
-graph_clone_nn = function(graph,cell_clone_prob,prob_thresh = 0.1,k = 2,verbose = FALSE){
+graph_clone_nn = function(graph, cell_clone_prob, prob_thresh = 0.1, k = 2,
+                          clone_block_size = 25L, verbose = FALSE){
+  if (!is.numeric(k) || length(k) != 1L || is.na(k) || k < 1L) {
+    stop("`k` must be one positive integer.")
+  }
+  if (!is.numeric(clone_block_size) || length(clone_block_size) != 1L ||
+      is.na(clone_block_size) || clone_block_size < 1L) {
+    stop("`clone_block_size` must be one positive integer.")
+  }
+  k <- as.integer(k)
+  clone_block_size <- as.integer(clone_block_size)
   cell_group_mat = cell_clone_prob
   cell_group_mat[cell_group_mat < prob_thresh] = 0
   cell_group_mat[cell_group_mat >= prob_thresh] = 1
 
   group_n = ncol(cell_group_mat)
+  retained_sizes <- Matrix::colSums(cell_group_mat > 0)
+  if (any(retained_sizes == 0L)) {
+    stop(
+      "The following clones have no cells after applying `prob_thresh`: ",
+      paste(colnames(cell_group_mat)[retained_sizes == 0L], collapse = ", "), "."
+    )
+  }
 
+  if (group_n < 2L) stop("At least two clones are required to calculate clone distances.")
   dis = future_lapply(1:(group_n-1),function(i){
     if(verbose){
       cat("Starting to proceed clone ",i," on PID ", Sys.getpid(),"\n")
@@ -331,23 +680,22 @@ graph_clone_nn = function(graph,cell_clone_prob,prob_thresh = 0.1,k = 2,verbose 
     from = which(cell_group_mat[,i] > 0)
     mass_1 = cell_group_mat[from,i]
     # cat("The size of mass 1:",length(mass_1),"\n")
-    to = which(rowSums(cell_group_mat[,(i+1):group_n,drop = FALSE]) > 0)
-
-    dis_i = distances(graph, v = from, to = to)
-
-    dis_out = sapply((i+1):group_n,function(j){
-      id = which(cell_group_mat[,j] > 0)
-
-      x = dis_i[,to %in% id,drop = FALSE]
-      # cat("The size of the distance matrix:",dim(x),"\n")
-
-      out = group_2_min(x,group1 = 1:nrow(x),group2 = 1:ncol(x), k = k)
-
-      return(out)
+    target_clones <- (i + 1L):group_n
+    target_blocks <- split(target_clones, ceiling(seq_along(target_clones) / clone_block_size))
+    block_output <- lapply(target_blocks, function(block) {
+      to <- which(Matrix::rowSums(cell_group_mat[, block, drop = FALSE]) > 0)
+      if (length(from) == 0L || length(to) == 0L) {
+        stop("Every clone must retain at least one cell after applying `prob_thresh`.")
+      }
+      block_distances <- igraph::distances(graph, v = from, to = to)
+      dis_out <- vapply(block, function(j) {
+        id <- which(cell_group_mat[, j] > 0)
+        x <- block_distances[, to %in% id, drop = FALSE]
+        group_2_min(x, group1 = seq_len(nrow(x)), group2 = seq_len(ncol(x)), k = k)
+      }, numeric(1))
+      cbind(i, block, dis_out)
     })
-
-    out = cbind(i,(i+1):group_n,dis_out)
-    return(out)
+    do.call(rbind, block_output)
   },future.seed=TRUE)
   dis = do.call(rbind,dis)
   colnames(dis) = c("group1","group2","dis")

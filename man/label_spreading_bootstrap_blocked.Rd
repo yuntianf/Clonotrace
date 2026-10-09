@@ -61,6 +61,12 @@ probabilities plus mean L1 deviance per cell.
 - Each bootstrap uses a random subset of labeled cells, writes its results to a temporary HDF5,
   and accumulates the L1 deviation vs the reference in streaming mode.
 - Parallelizable via \pkg{future.apply}: set a plan before calling.
+- A reference created internally is removed on exit. A caller-supplied
+  \code{refer_h5} is treated as a cache and is preserved.
+
+Only intermediate class blocks are disk-backed. The returned \code{prob}
+matrix is dense for compatibility, so callers should still budget roughly
+\eqn{8NC} bytes for one final double-precision cells-by-label matrix.
 }
 \examples{
 \dontrun{

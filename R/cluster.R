@@ -23,16 +23,16 @@
 #'
 #' @export
 leiden_embedding = function(data,k = 30,prune.snn = 0,weight = "jaccard",resolution = 1){
-  snn = sNN(data,k = k)
+  snn = dbscan::sNN(data,k = k)
   snn$jaccard = snn$shared/(2*k-snn$shared)
 
   snn_edge = as.data.frame(cbind(rep(1:nrow(data),each = k),c(t(snn$id)),
                                      c(t(snn$dis)),c(t(snn$jaccard))))
   colnames(snn_edge) = c("start","end","dis","jaccard")
-  snn_edge = snn_edge %>% filter(jaccard > prune.snn)
+  snn_edge = dplyr::filter(snn_edge, jaccard > prune.snn)
 
   colnames(snn_edge)[which(colnames(snn_edge) == weight)] = "weight"
-  snn_graph = graph_from_data_frame(snn_edge,directed = FALSE,vertices = 1:nrow(data))
+  snn_graph = igraph::graph_from_data_frame(snn_edge,directed = FALSE,vertices = 1:nrow(data))
 
   # cluster = cluster_leiden(dis_snn_graph,resolution = resolution)
   cluster = igraph::cluster_louvain(snn_graph,resolution = resolution)
@@ -85,7 +85,7 @@ leiden_embedding_fast <- function(data, k = 30, prune.snn = 0, weight = "jaccard
   jaccard[jaccard <= prune.snn] <- 0
   diag(jaccard) <- 0
   jaccard <- Matrix::drop0(jaccard)
-  jaccard <- as(jaccard, "dgCMatrix")
+  jaccard <- methods::as(jaccard, "dgCMatrix")
 
   # 4. Convert to igraph (weighted)
   snn_graph <- igraph::graph_from_adjacency_matrix(
@@ -121,10 +121,10 @@ leiden_embedding_fast <- function(data, k = 30, prune.snn = 0, weight = "jaccard
 #' @return If `if_umap = TRUE`, returns a data frame with UMAP coordinates and cluster labels.
 #' Otherwise, returns a factor vector of cluster memberships.
 #'
-#' @importFrom dbscan sNN
 #' @importFrom igraph graph_from_data_frame cluster_leiden
 #' @importFrom uwot umap
 #' @importFrom dplyr filter
+#' @importFrom stats as.dist
 #' @examples
 #' mat <- matrix(rnorm(500), nrow = 100)
 #' dmat <- dist(mat)
@@ -132,32 +132,77 @@ leiden_embedding_fast <- function(data, k = 30, prune.snn = 0, weight = "jaccard
 #'
 #' @export
 leiden_dis = function(dismat,k = 10,prune.snn = 0,weight = "jaccard",resolution = 1,if_umap = TRUE){
+    node_names <- if (inherits(dismat, "dist")) attr(dismat, "Labels") else rownames(dismat)
+    dismat <- as.matrix(dismat)
+    storage.mode(dismat) <- "double"
+    if (nrow(dismat) != ncol(dismat) || nrow(dismat) < 2L) {
+      stop("`dismat` must be a square distance matrix with at least two rows.")
+    }
+    if (any(!is.finite(dismat)) || any(dismat < 0)) {
+      stop("`dismat` must contain finite, non-negative distances.")
+    }
+    if (!isTRUE(all.equal(dismat, t(dismat), tolerance = sqrt(.Machine$double.eps), check.attributes = FALSE))) {
+      stop("`dismat` must be symmetric.")
+    }
+    diag(dismat) <- 0
+    if (is.null(node_names)) node_names <- as.character(seq_len(nrow(dismat)))
+    if (length(node_names) != nrow(dismat) || anyNA(node_names) || anyDuplicated(node_names)) {
+      stop("Distance labels must be unique and match the matrix dimensions.")
+    }
+    if (!is.numeric(k) || length(k) != 1L || is.na(k) || k < 1L || k >= nrow(dismat)) {
+      stop("`k` must be a positive integer smaller than the number of rows in `dismat`.")
+    }
+    k <- as.integer(k)
+    weight <- match.arg(weight, c("jaccard", "dis"))
+    if (!is.numeric(prune.snn) || length(prune.snn) != 1L || is.na(prune.snn)) {
+      stop("`prune.snn` must be one numeric value.")
+    }
     if(if_umap){
-      group_umap = umap::umap(dismat,input="dist")
+      umap_config <- umap::umap.defaults
+      umap_config$n_neighbors <- k
+      group_umap = umap::umap(dismat, input = "dist", config = umap_config)
       group_umap = as.data.frame(group_umap$layout)
       colnames(group_umap) = c("umap1","umap2")
+      rownames(group_umap) <- node_names
     }
 
-    dis_snn = sNN(as.dist(dismat),k = k)
-    dis_snn$jaccard = dis_snn$shared/(2*k-dis_snn$shared)
+    neighbor_id <- t(vapply(seq_len(nrow(dismat)), function(i) {
+      candidates <- setdiff(seq_len(nrow(dismat)), i)
+      candidates[order(dismat[i, candidates], na.last = NA)[seq_len(k)]]
+    }, integer(k)))
+    neighbor_dis <- matrix(
+      dismat[cbind(rep(seq_len(nrow(dismat)), each = k), as.vector(t(neighbor_id)))],
+      nrow = nrow(dismat), byrow = TRUE
+    )
+    shared <- matrix(0L, nrow = nrow(dismat), ncol = k)
+    for (i in seq_len(nrow(dismat))) {
+      for (j in seq_len(k)) {
+        shared[i, j] <- length(intersect(neighbor_id[i, ], neighbor_id[neighbor_id[i, j], ]))
+      }
+    }
+    jaccard <- shared / (2 * k - shared)
 
-    dis_snn_edge = as.data.frame(cbind(rep(1:nrow(dismat),each = k),c(t(dis_snn$id)),
-                           c(t(dis_snn$dis)),c(t(dis_snn$jaccard))))
+    dis_snn_edge = as.data.frame(cbind(rep(seq_len(nrow(dismat)), each = k),
+                           as.vector(t(neighbor_id)), as.vector(t(neighbor_dis)), as.vector(t(jaccard))))
     colnames(dis_snn_edge) = c("start","end","dis","jaccard")
-    dis_snn_edge = dis_snn_edge %>% filter(jaccard > prune.snn)
+    dis_snn_edge = dplyr::filter(dis_snn_edge, jaccard > prune.snn)
 
     colnames(dis_snn_edge)[which(colnames(dis_snn_edge) == weight)] = "weight"
-    dis_snn_graph = graph_from_data_frame(dis_snn_edge,directed = FALSE,vertices = 1:nrow(dismat))
+    vertices <- data.frame(name = seq_len(nrow(dismat)), label = node_names)
+    dis_snn_graph = igraph::graph_from_data_frame(dis_snn_edge,directed = FALSE,vertices = vertices)
 
-    cluster = cluster_leiden(dis_snn_graph,resolution = resolution,objective_function = "modularity")
+    cluster = igraph::cluster_leiden(dis_snn_graph,resolution = resolution,objective_function = "modularity")
     # cluster = cluster_louvain(dis_snn_graph,resolution = resolution)
     # cluster = leiden(dis_snn_graph,resolution_parameter = resolution)
 
     if(if_umap){
       group_umap$cluster = as.factor(cluster$membership)
+      group_umap$clone = node_names
       # group_umap$cluster = as.factor(cluster)
       return(group_umap)
     }
-    return(as.factor(cluster$membership))
+    membership <- as.factor(cluster$membership)
+    names(membership) <- node_names
+    return(membership)
     # return(as.factor(cluster))
 }
