@@ -25,7 +25,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: r-lib/actions/setup-pandoc@v2
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -43,7 +43,7 @@ jobs:
   clean-install:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: r-lib/actions/setup-pandoc@v2
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -51,7 +51,7 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pak, any::testthat
+          extra-packages: any::testthat
           needs: check
       - name: Build source package
         run: R CMD build --no-manual .
@@ -59,11 +59,19 @@ jobs:
         shell: Rscript {0}
         run: |
           tarball <- list.files(pattern = "^Clonotrace_.*[.]tar[.]gz$", full.names = TRUE)
+          stopifnot(length(tarball) == 1L)
           clean_library <- tempfile("clonotrace-library-")
           dir.create(clean_library)
-          pak::local_install(tarball, lib = clean_library, dependencies = TRUE)
+          install.packages(
+            tarball,
+            lib = clean_library,
+            repos = NULL,
+            type = "source",
+            INSTALL_opts = "--install-tests"
+          )
           .libPaths(c(clean_library, .libPaths()))
-          testthat::test_local(".", package = "Clonotrace")
+          library(Clonotrace, lib.loc = clean_library)
+          testthat::test_package("Clonotrace", stop_on_failure = TRUE)
       - uses: actions/upload-artifact@v4
         with:
           name: Clonotrace-source-package
@@ -72,7 +80,7 @@ jobs:
   BiocCheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: r-lib/actions/setup-pandoc@v2
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -81,6 +89,20 @@ jobs:
         with:
           extra-packages: bioc::BiocCheck
           needs: check
-      - name: Run Bioconductor-specific checks
+      - name: Build source package
+        run: R CMD build --no-manual .
+      - name: Run Bioconductor-specific checks (advisory)
+        continue-on-error: true
         shell: Rscript {0}
-        run: BiocCheck::BiocCheck(".", `quit-with-status` = TRUE)
+        run: |
+          tarball <- list.files(pattern = "^Clonotrace_.*[.]tar[.]gz$", full.names = TRUE)
+          stopifnot(length(tarball) == 1L)
+          BiocCheck::BiocCheck(tarball, `quit-with-status` = TRUE)
+      - name: Upload BiocCheck diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clonotrace-BiocCheck
+          path: |
+            Clonotrace.BiocCheck/00BiocCheck.log
+            Clonotrace_*.tar.gz

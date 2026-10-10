@@ -30,6 +30,3 @@ VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
 Config/Needs/website: pkgdown
 NeedsCompilation: no
-Packaged: 2026-10-08 22:29:48 UTC; yuntianf
-Author: Yuntian Fu [aut, cre]
-Maintainer: Yuntian Fu <yuntianf@pennmedicine.upenn.edu>

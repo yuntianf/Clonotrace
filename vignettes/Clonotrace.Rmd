@@ -56,7 +56,7 @@ This vignette provides a step-by-step tutorial demonstrating how to use Clonotra
 - Cluster clones into transcriptional profiles
 - Perform downstream analyses such as profile-level pseudotime and gene association
 
----
+***
 
 ## Installation
 
@@ -242,6 +242,48 @@ cell_clone_prob = Matrix(cell_clone_prob, sparse = TRUE)
 colnames(cell_clone_prob) = names(table(cell_clone$clone))
 ```
 
+#### Safe stopping point after label propagation
+
+The sparse `cell_clone_prob` matrix is the reusable output of label propagation. It can be saved in the language-independent Matrix Market format, with separate tab-delimited files preserving the cell and clone identifiers:
+
+```{r, eval=FALSE}
+dir.create("clonotrace_intermediate", showWarnings = FALSE)
+
+Matrix::writeMM(
+  cell_clone_prob,
+  "clonotrace_intermediate/cell_clone_prob.mtx"
+)
+write.table(
+  data.frame(cell = rownames(cell_clone_prob)),
+  "clonotrace_intermediate/cell_clone_prob_cells.tsv",
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+write.table(
+  data.frame(clone = colnames(cell_clone_prob)),
+  "clonotrace_intermediate/cell_clone_prob_clones.tsv",
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+```
+
+The analysis can later resume from these files without repeating label propagation:
+
+```{r, eval=FALSE}
+cell_clone_prob = Matrix::readMM(
+  "clonotrace_intermediate/cell_clone_prob.mtx"
+)
+cell_ids = read.delim(
+  "clonotrace_intermediate/cell_clone_prob_cells.tsv",
+  stringsAsFactors = FALSE
+)$cell
+clone_ids = read.delim(
+  "clonotrace_intermediate/cell_clone_prob_clones.tsv",
+  stringsAsFactors = FALSE
+)$clone
+
+dimnames(cell_clone_prob) = list(cell_ids, clone_ids)
+cell_clone_prob = methods::as(cell_clone_prob, "CsparseMatrix")
+```
+
 We can use an example to show how the cell clone assignment is smoothed during this process:
 
 ```{r}
@@ -318,6 +360,42 @@ clone_dis = clone_disance(
 ```
 
 This step can still take hours on a large dataset. The exact calculation writes the cell-distance store and completed clone pairs to disk, so an interrupted run can resume from the same output and checkpoint directories. Increase the number of workers only after confirming that sufficient memory remains available.
+
+`clone_disance()` creates or reuses the following intermediate files in `outpath`:
+
+- `cell_graph.rds` stores the validated cell graph used by both clone-distance methods.
+- `clone_graph_dis.rds` stores the completed approximate clone distances generated with `exact = FALSE`.
+- `clone_graph_dis_exact.rds` stores the completed exact-OT clone distances generated with `exact = TRUE`.
+
+Disk-backed exact OT also creates `cell_graph_distance_exact.bin` and its metadata sidecar, which store the cell-graph distances in restartable row blocks, together with validated per-source checkpoints in `exact_ot_checkpoints/`. Each cached object records the inputs and parameters used to generate it; Clonotrace reuses it only when these metadata match the current analysis. The obsolete `groups_graph_dis.rds` file is no longer generated.
+
+#### Safe stopping point after clone-distance calculation
+
+If exact OT is interrupted, rerun the same `clone_disance()` call with unchanged inputs and parameters. Clonotrace will validate and reuse the completed internal checkpoints automatically. After either distance method finishes, the returned long-format clone-pair table can also be exported as a compressed, portable tab-delimited file:
+
+```{r, eval=FALSE}
+dir.create("clonotrace_intermediate", showWarnings = FALSE)
+distance_file = "clonotrace_intermediate/clone_distance.tsv.gz"
+connection = gzfile(distance_file, open = "wt")
+write.table(
+  clone_dis, connection,
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+close(connection)
+```
+
+Reload this table to continue with clone embedding and downstream analyses:
+
+```{r, eval=FALSE}
+connection = gzfile(
+  "clonotrace_intermediate/clone_distance.tsv.gz",
+  open = "rt"
+)
+clone_dis = read.delim(connection, stringsAsFactors = FALSE)
+close(connection)
+```
+
+The `.rds` and binary files listed above are package-managed restart caches rather than portable exchange files; users should retain them when they want automatic checkpoint reuse and use the Matrix Market or compressed TSV exports when sharing intermediate results across software environments.
 
 Here for time efficiency, we can use the pre-computed clone-wise distance for downstream applications.
 

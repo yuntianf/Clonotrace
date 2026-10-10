@@ -6,7 +6,9 @@
 ^[.]github$
 ^requirements[.]txt$
 ^vignettes/Clonotrace[.]html$
+^vignettes/Clonotrace[.]before_.*$
 ^build$
 ^Clonotrace[.]Rcheck$
+^Clonotrace[.]BiocCheck$
 ^Clonotrace_[0-9.]+[.]tar[.]gz$
 
