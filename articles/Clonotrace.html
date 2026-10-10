@@ -236,12 +236,53 @@ cell-to-clone probability by keeping top 90% mass</p>
 <span><span class="va">cell_clone_prob</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/Matrix.html" class="external-link">Matrix</a></span><span class="op">(</span><span class="va">cell_clone_prob</span>, sparse <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">cell_clone</span><span class="op">$</span><span class="va">clone</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="section level4">
+<h4 id="safe-stopping-point-after-label-propagation">Safe stopping point after label propagation<a class="anchor" aria-label="anchor" href="#safe-stopping-point-after-label-propagation"></a>
+</h4>
+<p>The sparse <code>cell_clone_prob</code> matrix is the reusable output
+of label propagation. It can be saved in the language-independent Matrix
+Market format, with separate tab-delimited files preserving the cell and
+clone identifiers:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="st">"clonotrace_intermediate"</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/externalFormats.html" class="external-link">writeMM</a></span><span class="op">(</span></span>
+<span>  <span class="va">cell_clone_prob</span>,</span>
+<span>  <span class="st">"clonotrace_intermediate/cell_clone_prob.mtx"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.table</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>cell <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="st">"clonotrace_intermediate/cell_clone_prob_cells.tsv"</span>,</span>
+<span>  sep <span class="op">=</span> <span class="st">"\t"</span>, quote <span class="op">=</span> <span class="cn">FALSE</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.table</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>clone <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="st">"clonotrace_intermediate/cell_clone_prob_clones.tsv"</span>,</span>
+<span>  sep <span class="op">=</span> <span class="st">"\t"</span>, quote <span class="op">=</span> <span class="cn">FALSE</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The analysis can later resume from these files without repeating
+label propagation:</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cell_clone_prob</span> <span class="op">=</span> <span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/externalFormats.html" class="external-link">readMM</a></span><span class="op">(</span></span>
+<span>  <span class="st">"clonotrace_intermediate/cell_clone_prob.mtx"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">cell_ids</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span></span>
+<span>  <span class="st">"clonotrace_intermediate/cell_clone_prob_cells.tsv"</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span><span class="op">$</span><span class="va">cell</span></span>
+<span><span class="va">clone_ids</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span></span>
+<span>  <span class="st">"clonotrace_intermediate/cell_clone_prob_clones.tsv"</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span><span class="op">$</span><span class="va">clone</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dimnames.html" class="external-link">dimnames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">cell_ids</span>, <span class="va">clone_ids</span><span class="op">)</span></span>
+<span><span class="va">cell_clone_prob</span> <span class="op">=</span> <span class="fu">methods</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">cell_clone_prob</span>, <span class="st">"CsparseMatrix"</span><span class="op">)</span></span></code></pre></div>
 <p>We can use an example to show how the cell clone assignment is
 smoothed during this process:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">example_clone</span> <span class="op">=</span> <span class="st">"Lineage-1193-6"</span></span></code></pre></div>
 <p>First we show the raw cell distribution of the example clone:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_example_umap_raw</span> <span class="op">=</span> <span class="fu"><a href="../reference/dimplot.html">dimplot</a></span><span class="op">(</span><span class="va">umap</span>,annot <span class="op">=</span> <span class="va">cell_meta</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">clone</span> <span class="op">==</span> <span class="va">example_clone</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>group <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span>,</span>
 <span>                                 color_by <span class="op">=</span> <span class="st">"group"</span>,label <span class="op">=</span> <span class="cn">FALSE</span>,size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_classic</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
@@ -253,12 +294,12 @@ smoothed during this process:</p>
 <p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_35_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>And after label propagation, its cell distribution becomes more
 continous.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_meta</span><span class="op">$</span><span class="va">prob</span> <span class="op">=</span> <span class="cn">NA</span></span>
 <span><span class="va">cell_meta</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span>,<span class="op">]</span><span class="op">$</span><span class="va">prob</span> <span class="op">=</span> <span class="va">cell_clone_prob</span><span class="op">[</span>,<span class="va">example_clone</span><span class="op">]</span></span></code></pre></div>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">umap</span><span class="op">$</span><span class="va">prob</span> <span class="op">=</span> <span class="va">cell_meta</span><span class="op">$</span><span class="va">prob</span></span></code></pre></div>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_example_umap_smooth</span> <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span> <span class="va">umap_1</span>,y <span class="op">=</span> <span class="va">umap_2</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">umap</span>,color <span class="op">=</span> <span class="st">"lightgrey"</span>,size <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">umap</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">prob</span> <span class="op">&gt;</span> <span class="fl">0.025</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span>,</span>
@@ -270,6 +311,7 @@ continous.</p>
 <span><span class="va">clone_example_umap_smooth</span> <span class="op">=</span> <span class="fu">ggrastr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ggrastr/man/rasterize.html" class="external-link">rasterize</a></span><span class="op">(</span><span class="va">clone_example_umap_smooth</span>,layers<span class="op">=</span><span class="st">'Point'</span>, dpi<span class="op">=</span><span class="fl">300</span><span class="op">)</span></span>
 <span><span class="va">clone_example_umap_smooth</span></span></code></pre></div>
 <p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_38_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="clonewise-transcriptomic-distance">Clonewise transcriptomic distance<a class="anchor" aria-label="anchor" href="#clonewise-transcriptomic-distance"></a>
@@ -283,7 +325,7 @@ disk-backed, checkpointed implementation by default, which reduces peak
 memory without changing the distance definition. The published Figure 4
 analysis used the original unadjusted distance, so
 <code>revised = FALSE</code> is specified explicitly below.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># not run</span></span>
 <span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="va">multisession</span>, workers <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">### exact OT distance</span></span>
@@ -304,9 +346,62 @@ calculation writes the cell-distance store and completed clone pairs to
 disk, so an interrupted run can resume from the same output and
 checkpoint directories. Increase the number of workers only after
 confirming that sufficient memory remains available.</p>
+<p><code><a href="../reference/clone_disance.html">clone_disance()</a></code> creates or reuses the following
+intermediate files in <code>outpath</code>:</p>
+<ul>
+<li>
+<code>cell_graph.rds</code> stores the validated cell graph used by
+both clone-distance methods.</li>
+<li>
+<code>clone_graph_dis.rds</code> stores the completed approximate
+clone distances generated with <code>exact = FALSE</code>.</li>
+<li>
+<code>clone_graph_dis_exact.rds</code> stores the completed exact-OT
+clone distances generated with <code>exact = TRUE</code>.</li>
+</ul>
+<p>Disk-backed exact OT also creates
+<code>cell_graph_distance_exact.bin</code> and its metadata sidecar,
+which store the cell-graph distances in restartable row blocks, together
+with validated per-source checkpoints in
+<code>exact_ot_checkpoints/</code>. Each cached object records the
+inputs and parameters used to generate it; Clonotrace reuses it only
+when these metadata match the current analysis. The obsolete
+<code>groups_graph_dis.rds</code> file is no longer generated.</p>
+<div class="section level4">
+<h4 id="safe-stopping-point-after-clone-distance-calculation">Safe stopping point after clone-distance calculation<a class="anchor" aria-label="anchor" href="#safe-stopping-point-after-clone-distance-calculation"></a>
+</h4>
+<p>If exact OT is interrupted, rerun the same
+<code><a href="../reference/clone_disance.html">clone_disance()</a></code> call with unchanged inputs and parameters.
+Clonotrace will validate and reuse the completed internal checkpoints
+automatically. After either distance method finishes, the returned
+long-format clone-pair table can also be exported as a compressed,
+portable tab-delimited file:</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="st">"clonotrace_intermediate"</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">distance_file</span> <span class="op">=</span> <span class="st">"clonotrace_intermediate/clone_distance.tsv.gz"</span></span>
+<span><span class="va">connection</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile</a></span><span class="op">(</span><span class="va">distance_file</span>, open <span class="op">=</span> <span class="st">"wt"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.table</a></span><span class="op">(</span></span>
+<span>  <span class="va">clone_dis</span>, <span class="va">connection</span>,</span>
+<span>  sep <span class="op">=</span> <span class="st">"\t"</span>, quote <span class="op">=</span> <span class="cn">FALSE</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">close</a></span><span class="op">(</span><span class="va">connection</span><span class="op">)</span></span></code></pre></div>
+<p>Reload this table to continue with clone embedding and downstream
+analyses:</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">connection</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile</a></span><span class="op">(</span></span>
+<span>  <span class="st">"clonotrace_intermediate/clone_distance.tsv.gz"</span>,</span>
+<span>  open <span class="op">=</span> <span class="st">"rt"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">clone_dis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.delim</a></span><span class="op">(</span><span class="va">connection</span>, stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">close</a></span><span class="op">(</span><span class="va">connection</span><span class="op">)</span></span></code></pre></div>
+<p>The <code>.rds</code> and binary files listed above are
+package-managed restart caches rather than portable exchange files;
+users should retain them when they want automatic checkpoint reuse and
+use the Matrix Market or compressed TSV exports when sharing
+intermediate results across software environments.</p>
 <p>Here for time efficiency, we can use the pre-computed clone-wise
 distance for downstream applications.</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">file_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"clone_graph_dis.tsv"</span>, package <span class="op">=</span> <span class="st">"Clonotrace"</span><span class="op">)</span></span>
 <span><span class="va">clone_dis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">file_path</span>,sep <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span></span>
 <span></span>
@@ -315,18 +410,19 @@ distance for downstream applications.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="va">clone_dis</span><span class="op">)</span> <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">clone_dis</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">clone_dis</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span></span></code></pre></div>
 </div>
+</div>
 <div class="section level3">
 <h3 id="clone-embedding-visualization">clone embedding visualization<a class="anchor" aria-label="anchor" href="#clone-embedding-visualization"></a>
 </h3>
 <p>We first cluster clones using leiden algorithm and visualize the
 clone community in the UMAP.</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1230</span><span class="op">)</span></span>
 <span><span class="va">clone_cluster</span> <span class="op">=</span> <span class="fu"><a href="../reference/leiden_dis.html">leiden_dis</a></span><span class="op">(</span>dismat <span class="op">=</span> <span class="va">clone_dis</span>,k <span class="op">=</span> <span class="fl">20</span>,resolution <span class="op">=</span> <span class="fl">0.5</span>,if_umap <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">clone_cluster_center</span> <span class="op">=</span> <span class="va">clone_cluster</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">cluster</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise_all.html" class="external-link">summarise_all</a></span><span class="op">(</span><span class="va">median</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_cluster</span><span class="op">$</span><span class="va">mass</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums-methods.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_leiden_umap</span> <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">umap1</span>,y <span class="op">=</span> <span class="va">umap2</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">clone_cluster</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">cluster</span>,size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="va">mass</span><span class="op">)</span><span class="op">)</span>,pch<span class="op">=</span><span class="fl">21</span>,color <span class="op">=</span> <span class="st">"black"</span>,alpha <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu">ggrepel</span><span class="fu">::</span><span class="fu"><a href="https://ggrepel.slowkow.com/reference/geom_text_repel.html" class="external-link">geom_label_repel</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">clone_cluster_center</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">cluster</span><span class="op">)</span>,size <span class="op">=</span> <span class="fl">8</span><span class="op">)</span><span class="op">+</span></span>
@@ -343,15 +439,15 @@ clone community in the UMAP.</p>
 <p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_50_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>We can also visualize the clone embedding in other low dimension
 reductions like a diffusion map:</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_leiden_dm</span> <span class="op">&lt;-</span> <span class="fu">diffusionMap</span><span class="fu">::</span><span class="fu">diffuse</span><span class="op">(</span><span class="va">clone_dis</span>,maxdim <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span>
 <span><span class="va">clone_leiden_dm_coord</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">clone_leiden_dm</span><span class="op">$</span><span class="va">X</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">clone_leiden_dm_coord</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"dm"</span>,<span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">clone_leiden_dm_coord</span><span class="op">)</span>,sep <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">clone_leiden_dm_coord</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">clone_cluster</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dm_cluster_center</span> <span class="op">=</span> <span class="va">clone_leiden_dm_coord</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">clone_cluster</span><span class="op">$</span><span class="va">cluster</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise_all.html" class="external-link">summarise_all</a></span><span class="op">(</span><span class="va">median</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">dm_cluster_center</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">=</span> <span class="st">"cluster"</span></span></code></pre></div>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_leiden_diffmap</span> <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">dm1</span>,y <span class="op">=</span> <span class="va">dm2</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">clone_leiden_dm_coord</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">clone_cluster</span><span class="op">$</span><span class="va">cluster</span>,size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="va">clone_cluster</span><span class="op">$</span><span class="va">mass</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>           pch<span class="op">=</span><span class="fl">21</span>,color <span class="op">=</span> <span class="st">"black"</span>,alpha <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span><span class="op">+</span></span>
@@ -369,31 +465,31 @@ reductions like a diffusion map:</p>
 <p>Diffusion map is good to layout continuous movement of clones over
 time. Here we can mark how clones with the same lineage barcodes change
 across time.</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_cluster</span> <span class="op">=</span> <span class="va">clone_cluster</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>clone <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">clone_cluster</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>                                  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>lineage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">clone</span>,start <span class="op">=</span> <span class="fl">1</span>,stop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">clone</span><span class="op">)</span><span class="op">-</span><span class="fl">2</span><span class="op">)</span>,</span>
 <span>                                  time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">clone</span>,start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">clone</span><span class="op">)</span>,stop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">clone</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>                                  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"day"</span>,<span class="va">time</span>,sep <span class="op">=</span> <span class="st">""</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_link</span> <span class="op">=</span> <span class="fu"><a href="../reference/long2wide.html">long2wide</a></span><span class="op">(</span><span class="va">clone_cluster</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">lineage</span>,<span class="va">time</span>,<span class="va">clone</span><span class="op">)</span>,</span>
 <span>                       row_names_from <span class="op">=</span> <span class="st">"lineage"</span>,</span>
 <span>                       col_names_from <span class="op">=</span> <span class="st">"time"</span>,</span>
 <span>                       values_from <span class="op">=</span> <span class="st">"clone"</span>,</span>
 <span>                       symmetric <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">clone_link</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.omit</a></span><span class="op">(</span><span class="va">clone_link</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">clone_link</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start"</span>,<span class="st">"end"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_link_coord</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">clone_link</span>,</span>
 <span>                         <span class="va">clone_leiden_dm_coord</span><span class="op">[</span><span class="va">clone_link</span><span class="op">$</span><span class="va">start</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dm1"</span>,<span class="st">"dm2"</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>                         <span class="va">clone_leiden_dm_coord</span><span class="op">[</span><span class="va">clone_link</span><span class="op">$</span><span class="va">end</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dm1"</span>,<span class="st">"dm2"</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>                         <span class="va">clone_cluster</span><span class="op">[</span><span class="va">clone_link</span><span class="op">$</span><span class="va">start</span>,<span class="st">"cluster"</span><span class="op">]</span>,</span>
 <span>                         <span class="va">clone_cluster</span><span class="op">[</span><span class="va">clone_link</span><span class="op">$</span><span class="va">end</span>,<span class="st">"cluster"</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">clone_link_coord</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start"</span>,<span class="st">"end"</span>,<span class="st">"xdm1"</span>,<span class="st">"xdm2"</span>,<span class="st">"ydm1"</span>,<span class="st">"ydm2"</span>,<span class="st">"x_cluster"</span>,<span class="st">"y_cluster"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sub_annot</span> <span class="op">=</span> <span class="va">clone_cluster</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">lineage</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">clone_link_coord</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">sub_dm_coord</span> <span class="op">=</span> <span class="va">clone_leiden_dm_coord</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sub_annot</span><span class="op">)</span>,<span class="op">]</span></span></code></pre></div>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_leiden_diffmap_arrow</span> <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">clone_leiden_dm_coord</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">dm1</span>,y <span class="op">=</span> <span class="va">dm2</span><span class="op">)</span>,size <span class="op">=</span> <span class="fl">0.2</span>,color <span class="op">=</span> <span class="st">"lightgrey"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">sub_dm_coord</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">dm1</span>,y <span class="op">=</span> <span class="va">dm2</span>,fill <span class="op">=</span> <span class="va">sub_annot</span><span class="op">$</span><span class="va">time</span>,size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="va">sub_annot</span><span class="op">$</span><span class="va">mass</span><span class="op">)</span><span class="op">)</span>,shape <span class="op">=</span> <span class="fl">21</span><span class="op">)</span><span class="op">+</span></span>
@@ -417,15 +513,15 @@ to day6.</p>
 </h3>
 <p>After we cluster the clones into profiles, with the cell clone
 probability, we can also map cells to profiles:</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_profile</span> <span class="op">=</span> <span class="va">clone_cluster</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">clone</span>,<span class="va">cluster</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>flag <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">clone_profile</span> <span class="op">=</span> <span class="fu"><a href="../reference/long2sparse.html">long2sparse</a></span><span class="op">(</span>long <span class="op">=</span> <span class="va">clone_profile</span>,row_names_from <span class="op">=</span> <span class="st">"clone"</span>,col_names_from <span class="op">=</span> <span class="st">"cluster"</span>,values_from <span class="op">=</span> <span class="st">"flag"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_profile_prob</span> <span class="op">=</span> <span class="va">cell_clone_prob</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">clone_profile</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span>,<span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_profile_prob</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span></span></code></pre></div>
 <p>For cells with profile probability higher than 0.5, we assign it with
 a profile label:</p>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_meta</span><span class="op">$</span><span class="va">profile</span> <span class="op">=</span> <span class="cn">NA</span></span>
 <span><span class="va">cell_meta</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_profile_prob</span><span class="op">)</span>,<span class="op">]</span><span class="op">$</span><span class="va">profile</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">cell_profile_prob</span>,<span class="fl">1</span>,<span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span></span>
 <span>    <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">{</span></span>
@@ -436,11 +532,11 @@ a profile label:</p>
 <span>    <span class="op">}</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="va">cell_meta</span> <span class="op">=</span> <span class="va">cell_meta</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>profile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">profile</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_meta</span><span class="op">$</span><span class="va">profile_prob</span> <span class="op">=</span> <span class="cn">NA</span></span>
 <span><span class="va">cell_meta</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_profile_prob</span><span class="op">)</span>,<span class="op">]</span><span class="op">$</span><span class="va">profile_prob</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">cell_profile_prob</span>,<span class="fl">1</span>,<span class="va">max</span><span class="op">)</span></span></code></pre></div>
 <p>Then we can visualize how profile flow over the cell embedding:</p>
-<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_profile_umap</span> <span class="op">=</span> <span class="fu"><a href="../reference/dimplot.html">dimplot</a></span><span class="op">(</span>embedding <span class="op">=</span> <span class="va">umap</span>,annot <span class="op">=</span> <span class="va">cell_meta</span>,color_by <span class="op">=</span> <span class="st">"profile"</span>,</span>
 <span>                            size <span class="op">=</span> <span class="fl">0.1</span>,alpha_by <span class="op">=</span> <span class="st">"profile_prob"</span>,label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>, </span>
@@ -459,28 +555,28 @@ and 4 denote the bipotent differenitation.</p>
 <p>We first generate the clone level pseudotime by diffusion pseudotime
 in the clone embedding. Here we use the clone distance projection in the
 MDS space as the clone embedding.</p>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_mds</span> <span class="op">=</span> <span class="fu">MASS</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/MASS/man/isoMDS.html" class="external-link">isoMDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">clone_dis</span><span class="op">)</span>, k<span class="op">=</span><span class="fl">30</span><span class="op">)</span></span>
 <span><span class="va">clone_embedding</span> <span class="op">=</span> <span class="va">clone_mds</span><span class="op">$</span><span class="va">points</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">clone_embedding</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"mds"</span>,<span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">clone_embedding</span><span class="op">)</span>,sep <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">clone_embedding</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">clone_cluster</span><span class="op">)</span></span></code></pre></div>
 <p>This step is kind slow, here we also read a pre-computed MDS
 embedding for the downstream analysis:</p>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">file_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"clone_mds.tsv"</span>, package <span class="op">=</span> <span class="st">"Clonotrace"</span><span class="op">)</span></span>
 <span><span class="va">clone_embedding</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">file_path</span>,sep <span class="op">=</span> <span class="st">"\t"</span>,header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Here we choose the cell cluster 0 as the starting cluster for
 diffusion pseudotime. The <code>clone_dpt</code> function would
 automatically choose the clone which has the highest enrichment in this
 starting cluster to be the root of diffusion pseudotime.</p>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_t</span> <span class="op">=</span> <span class="fu"><a href="../reference/clone_dpt.html">clone_dpt</a></span><span class="op">(</span>clone_embedding <span class="op">=</span> <span class="va">clone_embedding</span>,cell_meta <span class="op">=</span> <span class="va">cell_meta</span>,</span>
 <span>                    clone_col <span class="op">=</span> <span class="st">"clone"</span>,cluster_col <span class="op">=</span> <span class="st">"cluster"</span>,start_cluster <span class="op">=</span> <span class="st">"0"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_cluster</span><span class="op">$</span><span class="va">dpt</span> <span class="op">=</span> <span class="va">clone_t</span></span></code></pre></div>
 <p>We can then visualize the clone level pseudotime in the diffusion
 map:</p>
-<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clone_dpt_diffmap</span> <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">dm1</span>,y <span class="op">=</span> <span class="va">dm2</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">clone_leiden_dm_coord</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">clone_cluster</span><span class="op">$</span><span class="va">dpt</span>,size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="va">clone_cluster</span><span class="op">$</span><span class="va">mass</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>           pch<span class="op">=</span><span class="fl">21</span>,color <span class="op">=</span> <span class="st">"black"</span>,alpha <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span><span class="op">+</span></span>
@@ -500,10 +596,10 @@ map:</p>
 by multiplying the clone pseudotime to cell clone probability. The
 pseudotime inference is necessary for the fate driving gene detection in
 the downstream analysis.</p>
-<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_meta</span><span class="op">$</span><span class="va">cell_t</span> <span class="op">=</span> <span class="cn">NA</span></span>
 <span><span class="va">cell_meta</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span>,<span class="op">]</span><span class="op">$</span><span class="va">cell_t</span> <span class="op">=</span> <span class="va">cell_clone_prob</span><span class="op">[</span>,<span class="va">clone_cluster</span><span class="op">$</span><span class="va">clone</span><span class="op">]</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">clone_cluster</span><span class="op">$</span><span class="va">dpt</span></span></code></pre></div>
-<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_dpt_umap</span> <span class="op">=</span> <span class="fu"><a href="../reference/dimplot.html">dimplot</a></span><span class="op">(</span>embedding <span class="op">=</span> <span class="va">umap</span>,annot <span class="op">=</span> <span class="va">cell_meta</span>,color_by <span class="op">=</span> <span class="st">"cell_t"</span>,</span>
 <span>                            size <span class="op">=</span> <span class="fl">0.1</span>,alpha_by <span class="op">=</span> <span class="cn">NULL</span>,label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>, </span>
@@ -523,11 +619,11 @@ the transcriptomic (cell) embedding, they will be pulled apart in the
 clone-weighted embedding if their corresponding clones are distant in
 clone space. This embedding can better illustrate the clone level
 heterogeneity.</p>
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_k</span> <span class="op">=</span> <span class="fl">30</span></span>
 <span><span class="va">clone_k</span> <span class="op">=</span> <span class="fl">15</span></span>
 <span><span class="va">cell_embedding</span> <span class="op">=</span> <span class="va">pca</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_clone_prob</span><span class="op">)</span>,<span class="op">]</span></span></code></pre></div>
-<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="va">multisession</span>, workers <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">coembed_dis</span> <span class="op">=</span> <span class="fu"><a href="../reference/cell_clone_coembed.html">cell_clone_coembed</a></span><span class="op">(</span></span>
 <span>  <span class="va">cell_embedding</span>, <span class="va">clone_embedding</span>, <span class="va">cell_clone_prob</span>,</span>
@@ -537,17 +633,17 @@ heterogeneity.</p>
 distance matrix, which denotes a weighted kNN network between cells. We
 can project this kNN network to UMAP for visualization. This step
 requires a python script.</p>
-<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Optionally set RETICULATE_PYTHON before starting R.</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rstudio.github.io/reticulate/" class="external-link">reticulate</a></span><span class="op">)</span></span>
 <span><span class="va">python_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"RETICULATE_PYTHON"</span><span class="op">)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nzchar</a></span><span class="op">(</span><span class="va">python_path</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rstudio.github.io/reticulate/reference/use_python.html" class="external-link">use_python</a></span><span class="op">(</span><span class="va">python_path</span>, required <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">script_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"py"</span>, <span class="st">"embedding_from_kNN.py"</span>, package <span class="op">=</span> <span class="st">"Clonotrace"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rstudio.github.io/reticulate/reference/source_python.html" class="external-link">source_python</a></span><span class="op">(</span><span class="va">script_path</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_coembed_umap</span> <span class="op">=</span> <span class="fu"><a href="../reference/umap_from_knn.html">umap_from_knn</a></span><span class="op">(</span><span class="va">coembed_dis</span>,n_neighbors <span class="op">=</span> <span class="fl">10</span>,seed <span class="op">=</span> <span class="fl">512</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">coembed_umap_cluster</span> <span class="op">=</span> <span class="fu"><a href="../reference/dimplot.html">dimplot</a></span><span class="op">(</span>embedding <span class="op">=</span> <span class="va">cell_coembed_umap</span>,annot <span class="op">=</span> <span class="va">cell_meta</span>,alpha_by <span class="op">=</span> <span class="cn">NULL</span>,label_size <span class="op">=</span> <span class="fl">8</span>,</span>
 <span>                          color_by <span class="op">=</span> <span class="st">"cluster"</span>,size <span class="op">=</span> <span class="fl">0.1</span>,alpha <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,    <span class="co"># Remove axis numbers (labels)</span></span>
@@ -561,7 +657,7 @@ monocytes (cluster 4, 3, 5) and neutriphils (cluster 1, 6, 7), which
 denote the clone level heterogeneity. Once we colored cells by the
 profile identity, we can see the two boundaries seperate the bipotent
 and unipotent profiles.</p>
-<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">coembed_umap_profile</span> <span class="op">=</span> <span class="fu"><a href="../reference/dimplot.html">dimplot</a></span><span class="op">(</span>embedding <span class="op">=</span> <span class="va">cell_coembed_umap</span>,annot <span class="op">=</span> <span class="va">cell_meta</span>,alpha_by <span class="op">=</span> <span class="cn">NULL</span>,label_size <span class="op">=</span> <span class="fl">8</span>,</span>
 <span>                          color_by <span class="op">=</span> <span class="st">"profile"</span>,size <span class="op">=</span> <span class="fl">0.1</span>,alpha <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,    <span class="co"># Remove axis numbers (labels)</span></span>
@@ -583,22 +679,22 @@ profile 1 and other profiles to identify early fate-associated
 genes.</p>
 <p>We first do the cell cluster profile enrichment using permutation
 test:</p>
-<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">enrich</span> <span class="op">=</span> <span class="fu"><a href="../reference/cluster_profile_enrich.html">cluster_profile_enrich</a></span><span class="op">(</span><span class="va">cell_profile_prob</span>,<span class="va">cell_meta</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_profile_prob</span><span class="op">)</span>,<span class="st">"cluster"</span><span class="op">]</span>,permute_n  <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></code></pre></div>
 <p>We can then visualize the enrichment result using a heatmap:</p>
-<div class="sourceCode" id="cb62"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mass_long</span> <span class="op">=</span> <span class="fu"><a href="../reference/wide2long.html">wide2long</a></span><span class="op">(</span><span class="va">enrich</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">mass_long</span> <span class="op">=</span> <span class="va">mass_long</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>i <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">enrich</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>,</span>
 <span>                                 j <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">enrich</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">[</span><span class="va">j</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mass_long</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cluster"</span>,<span class="st">"profile"</span>,<span class="st">"mass"</span><span class="op">)</span></span>
 <span><span class="va">mass_long</span> <span class="op">=</span> <span class="va">mass_long</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">cluster</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>freq <span class="op">=</span> <span class="va">mass</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">mass</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">mass_long</span><span class="op">$</span><span class="va">pvalue</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">enrich</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mass_long</span><span class="op">$</span><span class="va">signif</span> <span class="op">=</span> <span class="st">"ns"</span></span>
 <span><span class="va">mass_long</span><span class="op">$</span><span class="va">signif</span><span class="op">[</span><span class="va">mass_long</span><span class="op">$</span><span class="va">pvalue</span><span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">]</span> <span class="op">=</span> <span class="st">"*"</span></span>
 <span><span class="va">mass_long</span><span class="op">$</span><span class="va">signif</span><span class="op">[</span><span class="va">mass_long</span><span class="op">$</span><span class="va">pvalue</span><span class="op">&lt;</span> <span class="fl">0.01</span><span class="op">]</span> <span class="op">=</span> <span class="st">"**"</span></span>
 <span><span class="va">mass_long</span><span class="op">$</span><span class="va">signif</span><span class="op">[</span><span class="va">mass_long</span><span class="op">$</span><span class="va">pvalue</span><span class="op">&lt;</span> <span class="fl">0.001</span><span class="op">]</span> <span class="op">=</span> <span class="st">"***"</span></span></code></pre></div>
-<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_type_profile_enrich_heatmap</span> <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mass_long</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">cluster</span>,y <span class="op">=</span> <span class="va">profile</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_tile</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">freq</span><span class="op">)</span>,color <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"turbo"</span><span class="op">)</span><span class="op">+</span></span>
@@ -616,41 +712,41 @@ identify genes differentially expressed in profile 1 in cluster 4.</p>
 <div class="section level3">
 <h3 id="profile-deg-within-clusters">profile DEG within clusters<a class="anchor" aria-label="anchor" href="#profile-deg-within-clusters"></a>
 </h3>
-<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exprs</span> <span class="op">=</span> <span class="va">seurat_object</span><span class="op">@</span><span class="va">assays</span><span class="op">$</span><span class="va">RNA</span><span class="op">$</span><span class="va">data</span></span></code></pre></div>
-<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">start</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">DEG_1_4</span> <span class="op">=</span> <span class="fu"><a href="../reference/profile_cluster_DEG.html">profile_cluster_DEG</a></span><span class="op">(</span>profile <span class="op">=</span> <span class="st">"1"</span>,cluster <span class="op">=</span> <span class="st">"4"</span>,exprs <span class="op">=</span> <span class="va">exprs</span>,cell_meta <span class="op">=</span> <span class="va">cell_meta</span>,cell_profile_prob <span class="op">=</span> <span class="va">cell_profile_prob</span><span class="op">)</span></span>
 <span><span class="va">end</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">end</span> <span class="op">-</span> <span class="va">start</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">DEG_1_4_sig</span> <span class="op">=</span> <span class="va">DEG_1_4</span><span class="op">$</span><span class="va">stat</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">padj</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">DEG_1_4_sig</span><span class="op">)</span></span></code></pre></div>
 <p>In total we identified 2165 genes which are differentially expressed
 in profile 1 in cluster 4.</p>
 <p>Here we can take a look at the top 10 genes with the largest effect
 size.</p>
-<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">DEG_1_4_sig</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/top_n.html" class="external-link">top_n</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">cohen</span><span class="op">)</span>,n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 <p>We can take <code>Dmkn</code> as an example to show how the linear
 regression model fits for the profile 1 and other profiles in cluster 4
 along pseudotime:</p>
-<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_object</span> <span class="op">=</span> <span class="va">DEG_1_4</span></span></code></pre></div>
-<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">null_fit</span> <span class="op">=</span> <span class="va">test_object</span><span class="op">$</span><span class="va">design_null</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">test_object</span><span class="op">$</span><span class="va">coef</span><span class="op">[</span><span class="fl">3</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span></span>
 <span><span class="va">full_fit</span> <span class="op">=</span> <span class="va">test_object</span><span class="op">$</span><span class="va">design_null</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">test_object</span><span class="op">$</span><span class="va">coef</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>,<span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">null_fit</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">full_fit</span><span class="op">)</span> <span class="op">=</span> <span class="va">test_object</span><span class="op">$</span><span class="va">cell</span></span></code></pre></div>
-<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">example_gene</span> <span class="op">=</span> <span class="st">"Dmkn"</span></span></code></pre></div>
-<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_meta</span><span class="op">$</span><span class="va">exprs</span> <span class="op">=</span> <span class="va">exprs</span><span class="op">[</span><span class="va">example_gene</span>,<span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">cell_meta</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
-<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_meta</span><span class="op">$</span><span class="va">null_exprs</span> <span class="op">=</span> <span class="cn">NA</span></span>
 <span><span class="va">cell_meta</span><span class="op">[</span><span class="va">test_object</span><span class="op">$</span><span class="va">cell</span>,<span class="op">]</span><span class="op">$</span><span class="va">null_exprs</span> <span class="op">=</span> <span class="va">null_fit</span><span class="op">[</span>,<span class="va">example_gene</span><span class="op">]</span></span>
 <span><span class="va">cell_meta</span><span class="op">$</span><span class="va">full_exprs</span> <span class="op">=</span> <span class="cn">NA</span></span>
 <span><span class="va">cell_meta</span><span class="op">[</span><span class="va">test_object</span><span class="op">$</span><span class="va">cell</span>,<span class="op">]</span><span class="op">$</span><span class="va">full_exprs</span> <span class="op">=</span> <span class="va">full_fit</span><span class="op">[</span>,<span class="va">example_gene</span><span class="op">]</span></span></code></pre></div>
-<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb78"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gene_fit_cluster</span> <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">cell_meta</span><span class="op">[</span><span class="va">test_object</span><span class="op">$</span><span class="va">cell</span>,<span class="op">]</span><span class="op">)</span><span class="op">+</span></span>
 <span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">cell_t</span>,y <span class="op">=</span> <span class="va">exprs</span>,fill <span class="op">=</span> <span class="va">cell_profile_prob</span><span class="op">[</span><span class="va">test_object</span><span class="op">$</span><span class="va">cell</span>,<span class="st">"1"</span><span class="op">]</span><span class="op">)</span>,size <span class="op">=</span> <span class="fl">2</span>,shape <span class="op">=</span> <span class="fl">21</span>,color <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span><span class="op">+</span></span>
 <span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">cell_t</span>,y <span class="op">=</span> <span class="va">null_exprs</span><span class="op">)</span>,color <span class="op">=</span> <span class="st">"steelblue"</span>,linewidth <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span><span class="op">+</span></span>
@@ -662,7 +758,7 @@ along pseudotime:</p>
 <p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_117_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>We can further visualize the expression for <code>Dmkn</code> over
 the cell UMAP:</p>
-<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb79"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">feature_scatter</span> <span class="op">=</span> <span class="fu"><a href="../reference/dimplot.html">dimplot</a></span><span class="op">(</span>embedding <span class="op">=</span> <span class="va">umap</span>,annot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">exprs</span><span class="op">)</span>,color_by <span class="op">=</span> <span class="va">example_gene</span>,label  <span class="op">=</span> <span class="cn">FALSE</span>,size <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">""</span>,option <span class="op">=</span> <span class="st">"plasma"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,    <span class="co"># Remove axis numbers (labels)</span></span>
