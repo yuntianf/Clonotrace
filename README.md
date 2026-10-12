@@ -53,8 +53,6 @@ The core Clonotrace workflow does not require Python.
 - `label_spreading_bootstrap()` uses the memory-conscious HDF5-backed blocked
   implementation by default; use `backend = "dense"` only for legacy
   reproduction or small inputs.
-- Cell-graph SNN similarity is correctly converted to shortest-path cost, and
-  exact/approximate clone distances use validated, mode-specific checkpoints.
 - `clone_disance(exact = TRUE)` now uses the disk-backed exact-OT workflow by
   default. Its reusable components are `build_graph_distance_store()` and
   `graph_clone_ot_disk()`. The workflow
