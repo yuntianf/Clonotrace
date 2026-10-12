@@ -25,9 +25,20 @@ knitr::opts_chunk$set(
 )
 
 cached_demo_figure <- function(filename) {
-  path <- system.file("extdata", "demo_files", filename, package = "Clonotrace")
-  if (!nzchar(path)) stop("Bundled vignette figure not found: ", filename)
-  path
+  path <- file.path("..", "inst", "extdata", "demo_files", filename)
+  if (!file.exists(path)) {
+    path <- system.file("extdata", "demo_files", filename, package = "Clonotrace")
+  }
+  if (!nzchar(path) || !file.exists(path)) {
+    stop("Bundled vignette figure not found: ", filename)
+  }
+  # Keep figures inside the rendered article so pkgdown publishes them with it.
+  output <- file.path("Clonotrace_files", "figure-html", filename)
+  dir.create(dirname(output), recursive = TRUE, showWarnings = FALSE)
+  if (!file.copy(path, output, overwrite = TRUE)) {
+    stop("Could not copy bundled vignette figure: ", filename)
+  }
+  output
 }
 ```
 

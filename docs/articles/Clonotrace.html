@@ -128,7 +128,7 @@ types:</p>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>      <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>())<span class="sc">+</span></span>
 <span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;UMAP 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;UMAP 2&quot;</span>)</span>
 <span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>cell_type_umap</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_10_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_10_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>For a higher resolution in the downstream analysis, we further
 cluster cells into 9 cell clusters.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>cell_cluster_umap <span class="ot">=</span> <span class="fu">dimplot</span>(<span class="at">embedding =</span> umap,<span class="at">annot =</span> cell_meta,<span class="at">color_by =</span> <span class="st">&quot;cluster&quot;</span>,<span class="at">size =</span> <span class="fl">0.1</span>,<span class="at">label_size =</span> <span class="dv">5</span>)<span class="sc">+</span></span>
@@ -137,7 +137,7 @@ cluster cells into 9 cell clusters.</p>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>      <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>())<span class="sc">+</span></span>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;UMAP 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;UMAP 2&quot;</span>)</span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>cell_cluster_umap</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_12_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_12_0.png" width="420" style="display: block; margin: auto;" /></p>
 </div>
 <div id="clone-label-spreading" class="section level3">
 <h3>clone label spreading</h3>
@@ -156,7 +156,7 @@ are 8108 clones in total. 802 out of them expanded over 10 cells.</p>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;sqrt(clone size)&quot;</span>)<span class="sc">+</span></span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="fu">ylab</span>(<span class="st">&quot;clone count&quot;</span>)</span>
 <span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>clone_size_hist</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_18_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_18_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>Then we could spread the clone label in the cell graph to smooth the
 cell density in those expanding clones. There is a bootstrap during this
 process to filter out propagations with high deviance, usually in
@@ -186,7 +186,7 @@ histogram:</p>
 <span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="fu">theme_classic</span>()<span class="sc">+</span></span>
 <span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="fu">ylab</span>(<span class="st">&quot;cell count&quot;</span>)</span>
 <span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>deviance_hist</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_24_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_24_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>We can visualize the deviance of clone label spreading in each cell
 via cell UMAP, and here we use the 0.3 as the upper bound threshold for
 deviance. Cells with high deviance are enriched in undifferentiated
@@ -199,7 +199,7 @@ cells.</p>
 <span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>      <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>())<span class="sc">+</span></span>
 <span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="fu">ggtitle</span>(<span class="st">&quot;Cells with high deviance&quot;</span>)</span>
 <span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>deviance_umap</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_27_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_27_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>Then we filter out cells with high deviance, and sparsify the
 cell-to-clone probability by keeping top 90% mass</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">rownames</span>(cell_clone_prob_raw) <span class="ot">=</span> <span class="fu">rownames</span>(cell_meta)</span></code></pre></div>
@@ -221,7 +221,7 @@ smoothed during this process:</p>
 <span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>      <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>())</span>
 <span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a></span>
 <span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>clone_example_umap_raw</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_35_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_35_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>And after label propagation, its cell distribution becomes more
 continous.</p>
 <div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>cell_meta<span class="sc">$</span>prob <span class="ot">=</span> <span class="cn">NA</span></span>
@@ -237,7 +237,7 @@ continous.</p>
 <span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a>      <span class="at">axis.ticks =</span> <span class="fu">element_blank</span>())</span>
 <span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a>clone_example_umap_smooth <span class="ot">=</span> ggrastr<span class="sc">::</span><span class="fu">rasterize</span>(clone_example_umap_smooth,<span class="at">layers=</span><span class="st">&#39;Point&#39;</span>, <span class="at">dpi=</span><span class="dv">300</span>)</span>
 <span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a>clone_example_umap_smooth</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_38_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_38_0.png" width="420" style="display: block; margin: auto;" /></p>
 </div>
 <div id="clonewise-transcriptomic-distance" class="section level3">
 <h3>Clonewise transcriptomic distance</h3>
@@ -301,7 +301,7 @@ clone community in the UMAP.</p>
 <span id="cb32-11"><a href="#cb32-11" tabindex="-1"></a><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>)<span class="sc">+</span></span>
 <span id="cb32-12"><a href="#cb32-12" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;UMAP 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;UMAP 2&quot;</span>)</span>
 <span id="cb32-13"><a href="#cb32-13" tabindex="-1"></a>clone_leiden_umap</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_50_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_50_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>We can also visualize the clone embedding in other low dimension
 reductions like a diffusion map:</p>
 <div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a>clone_leiden_dm <span class="ot">&lt;-</span> diffusionMap<span class="sc">::</span><span class="fu">diffuse</span>(clone_dis,<span class="at">maxdim =</span> <span class="dv">30</span>)</span>
@@ -323,7 +323,7 @@ reductions like a diffusion map:</p>
 <span id="cb35-11"><a href="#cb35-11" tabindex="-1"></a><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>)<span class="sc">+</span></span>
 <span id="cb35-12"><a href="#cb35-12" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;dm 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;dm 2&quot;</span>)</span>
 <span id="cb35-13"><a href="#cb35-13" tabindex="-1"></a>clone_leiden_diffmap</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_54_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_54_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>Diffusion map is good to layout continuous movement of clones over
 time. Here we can mark how clones with the same lineage barcodes change
 across time.</p>
@@ -360,7 +360,7 @@ across time.</p>
 <span id="cb41-12"><a href="#cb41-12" tabindex="-1"></a><span class="fu">guides</span>(<span class="at">fill =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">size=</span><span class="dv">5</span>)),</span>
 <span id="cb41-13"><a href="#cb41-13" tabindex="-1"></a>       <span class="at">size =</span> <span class="fu">guide_legend</span>(<span class="at">title =</span> <span class="st">&quot;log2(mass)&quot;</span>))</span>
 <span id="cb41-14"><a href="#cb41-14" tabindex="-1"></a>clone_leiden_diffmap_arrow</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_61_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_61_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>From the diffusion map we can see an organized clonal shift from day4
 to day6.</p>
 </div>
@@ -394,7 +394,7 @@ a profile label:</p>
 <span id="cb46-5"><a href="#cb46-5" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;UMAP 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;UMAP 2&quot;</span>)<span class="sc">+</span></span>
 <span id="cb46-6"><a href="#cb46-6" tabindex="-1"></a><span class="fu">guides</span>(<span class="at">alpha =</span> <span class="st">&quot;none&quot;</span>,<span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">size=</span><span class="dv">5</span>)))</span>
 <span id="cb46-7"><a href="#cb46-7" tabindex="-1"></a>cell_profile_umap</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_70_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_70_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>Obvisouly, profile 5 and 6 unipotently differentiate to monocytes and
 profile 3 and 7 unipotently differentiate to netriphil, while profile 1
 and 4 denote the bipotent differenitation.</p>
@@ -435,7 +435,7 @@ map:</p>
 <span id="cb51-12"><a href="#cb51-12" tabindex="-1"></a><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>)<span class="sc">+</span></span>
 <span id="cb51-13"><a href="#cb51-13" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;dm 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;dm 2&quot;</span>)</span>
 <span id="cb51-14"><a href="#cb51-14" tabindex="-1"></a>clone_dpt_diffmap</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_80_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_80_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>Then we can smooth the clone level pseudotime over the cell embedding
 by multiplying the clone pseudotime to cell clone probability. The
 pseudotime inference is necessary for the fate driving gene detection in
@@ -449,7 +449,7 @@ the downstream analysis.</p>
 <span id="cb53-5"><a href="#cb53-5" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;UMAP 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;UMAP 2&quot;</span>)<span class="sc">+</span></span>
 <span id="cb53-6"><a href="#cb53-6" tabindex="-1"></a><span class="fu">scale_color_viridis_c</span>(<span class="at">name =</span> <span class="st">&quot;cell t&quot;</span>)</span>
 <span id="cb53-7"><a href="#cb53-7" tabindex="-1"></a>cell_dpt_umap</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_83_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_83_0.png" width="420" style="display: block; margin: auto;" /></p>
 </div>
 <div id="clone-weighted-cell-embedding-optional" class="section level3">
 <h3>clone weighted cell embedding (optional)</h3>
@@ -486,7 +486,7 @@ requires a python script.</p>
 <span id="cb59-5"><a href="#cb59-5" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;UMAP 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;UMAP 2&quot;</span>)<span class="sc">+</span></span>
 <span id="cb59-6"><a href="#cb59-6" tabindex="-1"></a><span class="fu">NoLegend</span>()</span>
 <span id="cb59-7"><a href="#cb59-7" tabindex="-1"></a>coembed_umap_cluster</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_92_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_92_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>Obviously, there appear two boundaries within the two branches for
 monocytes (cluster 4, 3, 5) and neutriphils (cluster 1, 6, 7), which
 denote the clone level heterogeneity. Once we colored cells by the
@@ -499,7 +499,7 @@ and unipotent profiles.</p>
 <span id="cb60-5"><a href="#cb60-5" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;UMAP 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;UMAP 2&quot;</span>)<span class="sc">+</span></span>
 <span id="cb60-6"><a href="#cb60-6" tabindex="-1"></a><span class="fu">NoLegend</span>()</span>
 <span id="cb60-7"><a href="#cb60-7" tabindex="-1"></a>coembed_umap_profile</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_94_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_94_0.png" width="420" style="display: block; margin: auto;" /></p>
 </div>
 <div id="profile-enrichment-in-each-cluster" class="section level3">
 <h3>profile enrichment in each cluster</h3>
@@ -532,7 +532,7 @@ test:</p>
 <span id="cb64-6"><a href="#cb64-6" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;cell cluster&quot;</span>)<span class="sc">+</span></span>
 <span id="cb64-7"><a href="#cb64-7" tabindex="-1"></a><span class="fu">ylab</span>(<span class="st">&quot;clone profile&quot;</span>)</span>
 <span id="cb64-8"><a href="#cb64-8" tabindex="-1"></a>cell_type_profile_enrich_heatmap</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_102_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_102_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>From the heatmap we can see that our target profile 1 is enriched in
 4 cell clusters, including 1, 3, 4 and 8, within which cluster 1 and 4
 are at early differentiation stage. Here, as an example, we will
@@ -573,7 +573,7 @@ along pseudotime:</p>
 <span id="cb74-6"><a href="#cb74-6" tabindex="-1"></a>        <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
 <span id="cb74-7"><a href="#cb74-7" tabindex="-1"></a>        <span class="fu">xlab</span>(<span class="st">&quot;pseudotime&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="fu">paste</span>(example_gene,<span class="st">&quot;exprs&quot;</span>,<span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
 <span id="cb74-8"><a href="#cb74-8" tabindex="-1"></a>gene_fit_cluster</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_117_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_117_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>We can further visualize the expression for <code>Dmkn</code> over
 the cell UMAP:</p>
 <div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" tabindex="-1"></a>feature_scatter <span class="ot">=</span> <span class="fu">dimplot</span>(<span class="at">embedding =</span> umap,<span class="at">annot =</span> <span class="fu">t</span>(exprs),<span class="at">color_by =</span> example_gene,<span class="at">label  =</span> <span class="cn">FALSE</span>,<span class="at">size =</span> <span class="fl">0.1</span>)<span class="sc">+</span></span>
@@ -585,7 +585,7 @@ the cell UMAP:</p>
 <span id="cb75-7"><a href="#cb75-7" tabindex="-1"></a><span class="fu">ggtitle</span>(example_gene)<span class="sc">+</span></span>
 <span id="cb75-8"><a href="#cb75-8" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">&quot;UMAP 1&quot;</span>)<span class="sc">+</span><span class="fu">ylab</span>(<span class="st">&quot;UMAP 2&quot;</span>)</span>
 <span id="cb75-9"><a href="#cb75-9" tabindex="-1"></a>feature_scatter</span></code></pre></div>
-<p><img src="../../.clonotrace_verify_vignette_restore_20261009/Clonotrace/extdata/demo_files/demo_119_0.png" width="420" style="display: block; margin: auto;" /></p>
+<p><img src="Clonotrace_files/figure-html/demo_119_0.png" width="420" style="display: block; margin: auto;" /></p>
 <p>Obviously, this <code>Dmkn</code> gene shows higher expression in the
 bipotent profile no matter in monocyte or neutriphil.</p>
 </div>
