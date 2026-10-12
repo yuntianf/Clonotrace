@@ -22,9 +22,17 @@ jobs:
         with:
           extra-packages: any::devtools, any::pkgdown
           needs: website
+      # Parallel workers need an installed package, not only devtools::load_all().
+      - name: Install package with tests
+        run: |
+          R CMD build --no-build-vignettes --no-manual .
+          R CMD INSTALL --install-tests Clonotrace_*.tar.gz
       - name: Run all tests
         shell: Rscript {0}
-        run: devtools::test(stop_on_failure = TRUE)
+        run: |
+          Sys.setenv(NOT_CRAN = "true")
+          library(Clonotrace)
+          testthat::test_package("Clonotrace", stop_on_failure = TRUE)
       - name: Build vignettes and site
         shell: Rscript {0}
         run: |
