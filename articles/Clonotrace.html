@@ -139,7 +139,7 @@ types:</p>
 <span>      axis.ticks <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"UMAP 2"</span><span class="op">)</span></span>
 <span><span class="va">cell_type_umap</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_10_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_10_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>For a higher resolution in the downstream analysis, we further
 cluster cells into 9 cell clusters.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -149,7 +149,7 @@ cluster cells into 9 cell clusters.</p>
 <span>      axis.ticks <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"UMAP 2"</span><span class="op">)</span></span>
 <span><span class="va">cell_cluster_umap</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_12_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_12_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
 <h3 id="clone-label-spreading">clone label spreading<a class="anchor" aria-label="anchor" href="#clone-label-spreading"></a>
@@ -172,7 +172,7 @@ are 8108 clones in total. 802 out of them expanded over 10 cells.</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"sqrt(clone size)"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"clone count"</span><span class="op">)</span></span>
 <span><span class="va">clone_size_hist</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_18_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_18_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>Then we could spread the clone label in the cell graph to smooth the
 cell density in those expanding clones. There is a bootstrap during this
 process to filter out propagations with high deviance, usually in
@@ -207,7 +207,7 @@ histogram:</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_classic</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"cell count"</span><span class="op">)</span></span>
 <span><span class="va">deviance_hist</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_24_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_24_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>We can visualize the deviance of clone label spreading in each cell
 via cell UMAP, and here we use the 0.3 as the upper bound threshold for
 deviance. Cells with high deviance are enriched in undifferentiated
@@ -222,7 +222,7 @@ cells.</p>
 <span>      axis.ticks <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Cells with high deviance"</span><span class="op">)</span></span>
 <span><span class="va">deviance_umap</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_27_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_27_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>Then we filter out cells with high deviance, and sparsify the
 cell-to-clone probability by keeping top 90% mass</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
@@ -291,7 +291,7 @@ smoothed during this process:</p>
 <span>      axis.ticks <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">clone_example_umap_raw</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_35_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_35_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>And after label propagation, its cell distribution becomes more
 continous.</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
@@ -310,7 +310,7 @@ continous.</p>
 <span>      axis.ticks <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">clone_example_umap_smooth</span> <span class="op">=</span> <span class="fu">ggrastr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ggrastr/man/rasterize.html" class="external-link">rasterize</a></span><span class="op">(</span><span class="va">clone_example_umap_smooth</span>,layers<span class="op">=</span><span class="st">'Point'</span>, dpi<span class="op">=</span><span class="fl">300</span><span class="op">)</span></span>
 <span><span class="va">clone_example_umap_smooth</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_38_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_38_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 </div>
 </div>
 <div class="section level3">
@@ -436,7 +436,7 @@ clone community in the UMAP.</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"UMAP 2"</span><span class="op">)</span></span>
 <span><span class="va">clone_leiden_umap</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_50_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_50_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>We can also visualize the clone embedding in other low dimension
 reductions like a diffusion map:</p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
@@ -461,7 +461,7 @@ reductions like a diffusion map:</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"dm 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"dm 2"</span><span class="op">)</span></span>
 <span><span class="va">clone_leiden_diffmap</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_54_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_54_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>Diffusion map is good to layout continuous movement of clones over
 time. Here we can mark how clones with the same lineage barcodes change
 across time.</p>
@@ -504,7 +504,7 @@ across time.</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guide_legend.html" class="external-link">guide_legend</a></span><span class="op">(</span>override.aes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>size<span class="op">=</span><span class="fl">5</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>       size <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guide_legend.html" class="external-link">guide_legend</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"log2(mass)"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">clone_leiden_diffmap_arrow</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_61_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_61_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>From the diffusion map we can see an organized clonal shift from day4
 to day6.</p>
 </div>
@@ -544,7 +544,7 @@ a profile label:</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"UMAP 2"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="st">"none"</span>,color <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guide_legend.html" class="external-link">guide_legend</a></span><span class="op">(</span>override.aes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>size<span class="op">=</span><span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">cell_profile_umap</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_70_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_70_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>Obvisouly, profile 5 and 6 unipotently differentiate to monocytes and
 profile 3 and 7 unipotently differentiate to netriphil, while profile 1
 and 4 denote the bipotent differenitation.</p>
@@ -591,7 +591,7 @@ map:</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"dm 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"dm 2"</span><span class="op">)</span></span>
 <span><span class="va">clone_dpt_diffmap</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_80_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_80_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>Then we can smooth the clone level pseudotime over the cell embedding
 by multiplying the clone pseudotime to cell clone probability. The
 pseudotime inference is necessary for the fate driving gene detection in
@@ -607,7 +607,7 @@ the downstream analysis.</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"UMAP 2"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_color_viridis_c</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"cell t"</span><span class="op">)</span></span>
 <span><span class="va">cell_dpt_umap</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_83_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_83_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
 <h3 id="clone-weighted-cell-embedding-optional">clone weighted cell embedding (optional)<a class="anchor" aria-label="anchor" href="#clone-weighted-cell-embedding-optional"></a>
@@ -651,7 +651,7 @@ requires a python script.</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"UMAP 2"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://satijalab.org/seurat/reference/SeuratTheme.html" class="external-link">NoLegend</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">coembed_umap_cluster</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_92_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_92_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>Obviously, there appear two boundaries within the two branches for
 monocytes (cluster 4, 3, 5) and neutriphils (cluster 1, 6, 7), which
 denote the clone level heterogeneity. Once we colored cells by the
@@ -665,7 +665,7 @@ and unipotent profiles.</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"UMAP 2"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://satijalab.org/seurat/reference/SeuratTheme.html" class="external-link">NoLegend</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">coembed_umap_profile</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_94_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_94_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
 <h3 id="profile-enrichment-in-each-cluster">profile enrichment in each cluster<a class="anchor" aria-label="anchor" href="#profile-enrichment-in-each-cluster"></a>
@@ -703,7 +703,7 @@ test:</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"cell cluster"</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"clone profile"</span><span class="op">)</span></span>
 <span><span class="va">cell_type_profile_enrich_heatmap</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_102_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_102_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>From the heatmap we can see that our target profile 1 is enriched in
 4 cell clusters, including 1, 3, 4 and 8, within which cluster 1 and 4
 are at early differentiation stage. Here, as an example, we will
@@ -755,7 +755,7 @@ along pseudotime:</p>
 <span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_classic</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
 <span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"pseudotime"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">example_gene</span>,<span class="st">"exprs"</span>,sep <span class="op">=</span> <span class="st">" "</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">gene_fit_cluster</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_117_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_117_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>We can further visualize the expression for <code>Dmkn</code> over
 the cell UMAP:</p>
 <div class="sourceCode" id="cb79"><pre class="downlit sourceCode r">
@@ -768,7 +768,7 @@ the cell UMAP:</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="va">example_gene</span><span class="op">)</span><span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"UMAP 1"</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"UMAP 2"</span><span class="op">)</span></span>
 <span><span class="va">feature_scatter</span></span></code></pre></div>
-<p><img src="../../../_temp/Library/Clonotrace/extdata/demo_files/demo_119_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
+<p><img src="Clonotrace_files/figure-html/demo_119_0.png" class="r-plt" alt="" width="420" style="display: block; margin: auto;"></p>
 <p>Obviously, this <code>Dmkn</code> gene shows higher expression in the
 bipotent profile no matter in monocyte or neutriphil.</p>
 </div>

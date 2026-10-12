@@ -106,7 +106,7 @@ xlab("UMAP 1")+ylab("UMAP 2")
 cell_type_umap
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_10_0.png)
+![](Clonotrace_files/figure-html/demo_10_0.png)
 
 For a higher resolution in the downstream analysis, we further cluster
 cells into 9 cell clusters.
@@ -121,7 +121,7 @@ xlab("UMAP 1")+ylab("UMAP 2")
 cell_cluster_umap
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_12_0.png)
+![](Clonotrace_files/figure-html/demo_12_0.png)
 
 ### clone label spreading
 
@@ -154,7 +154,7 @@ ylab("clone count")
 clone_size_hist
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_18_0.png)
+![](Clonotrace_files/figure-html/demo_18_0.png)
 
 Then we could spread the clone label in the cell graph to smooth the
 cell density in those expanding clones. There is a bootstrap during this
@@ -207,7 +207,7 @@ ylab("cell count")
 deviance_hist
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_24_0.png)
+![](Clonotrace_files/figure-html/demo_24_0.png)
 
 We can visualize the deviance of clone label spreading in each cell via
 cell UMAP, and here we use the 0.3 as the upper bound threshold for
@@ -230,7 +230,7 @@ ggtitle("Cells with high deviance")
 deviance_umap
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_27_0.png)
+![](Clonotrace_files/figure-html/demo_27_0.png)
 
 Then we filter out cells with high deviance, and sparsify the
 cell-to-clone probability by keeping top 90% mass
@@ -328,7 +328,7 @@ theme(axis.text = element_blank(),
 clone_example_umap_raw
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_35_0.png)
+![](Clonotrace_files/figure-html/demo_35_0.png)
 
 And after label propagation, its cell distribution becomes more
 continous.
@@ -358,7 +358,7 @@ clone_example_umap_smooth = ggrastr::rasterize(clone_example_umap_smooth,layers=
 clone_example_umap_smooth
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_38_0.png)
+![](Clonotrace_files/figure-html/demo_38_0.png)
 
 ### Clonewise transcriptomic distance
 
@@ -504,7 +504,7 @@ xlab("UMAP 1")+ylab("UMAP 2")
 clone_leiden_umap
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_50_0.png)
+![](Clonotrace_files/figure-html/demo_50_0.png)
 
 We can also visualize the clone embedding in other low dimension
 reductions like a diffusion map:
@@ -540,7 +540,7 @@ xlab("dm 1")+ylab("dm 2")
 clone_leiden_diffmap
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_54_0.png)
+![](Clonotrace_files/figure-html/demo_54_0.png)
 
 Diffusion map is good to layout continuous movement of clones over time.
 Here we can mark how clones with the same lineage barcodes change across
@@ -603,7 +603,7 @@ guides(fill = guide_legend(override.aes = list(size=5)),
 clone_leiden_diffmap_arrow
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_61_0.png)
+![](Clonotrace_files/figure-html/demo_61_0.png)
 
 From the diffusion map we can see an organized clonal shift from day4 to
 day6.
@@ -661,7 +661,7 @@ guides(alpha = "none",color = guide_legend(override.aes = list(size=5)))
 cell_profile_umap
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_70_0.png)
+![](Clonotrace_files/figure-html/demo_70_0.png)
 
 Obvisouly, profile 5 and 6 unipotently differentiate to monocytes and
 profile 3 and 7 unipotently differentiate to netriphil, while profile 1
@@ -726,7 +726,7 @@ xlab("dm 1")+ylab("dm 2")
 clone_dpt_diffmap
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_80_0.png)
+![](Clonotrace_files/figure-html/demo_80_0.png)
 
 Then we can smooth the clone level pseudotime over the cell embedding by
 multiplying the clone pseudotime to cell clone probability. The
@@ -750,7 +750,7 @@ scale_color_viridis_c(name = "cell t")
 cell_dpt_umap
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_83_0.png)
+![](Clonotrace_files/figure-html/demo_83_0.png)
 
 ### clone weighted cell embedding (optional)
 
@@ -813,7 +813,7 @@ NoLegend()
 coembed_umap_cluster
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_92_0.png)
+![](Clonotrace_files/figure-html/demo_92_0.png)
 
 Obviously, there appear two boundaries within the two branches for
 monocytes (cluster 4, 3, 5) and neutriphils (cluster 1, 6, 7), which
@@ -832,7 +832,7 @@ NoLegend()
 coembed_umap_profile
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_94_0.png)
+![](Clonotrace_files/figure-html/demo_94_0.png)
 
 ### profile enrichment in each cluster
 
@@ -882,7 +882,7 @@ ylab("clone profile")
 cell_type_profile_enrich_heatmap
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_102_0.png)
+![](Clonotrace_files/figure-html/demo_102_0.png)
 
 From the heatmap we can see that our target profile 1 is enriched in 4
 cell clusters, including 1, 3, 4 and 8, within which cluster 1 and 4 are
@@ -966,7 +966,7 @@ gene_fit_cluster = ggplot(cell_meta[test_object$cell,])+
 gene_fit_cluster
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_117_0.png)
+![](Clonotrace_files/figure-html/demo_117_0.png)
 
 We can further visualize the expression for `Dmkn` over the cell UMAP:
 
@@ -983,7 +983,7 @@ xlab("UMAP 1")+ylab("UMAP 2")
 feature_scatter
 ```
 
-![](../../../_temp/Library/Clonotrace/extdata/demo_files/demo_119_0.png)
+![](Clonotrace_files/figure-html/demo_119_0.png)
 
 Obviously, this `Dmkn` gene shows higher expression in the bipotent
 profile no matter in monocyte or neutriphil.
