@@ -20,7 +20,7 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::devtools, any::pkgdown
+          extra-packages: any::devtools, any::pkgdown, any::remotes
           needs: website
       # Parallel workers need an installed package, not only devtools::load_all().
       - name: Install package with tests
