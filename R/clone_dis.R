@@ -186,7 +186,7 @@ clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
   } else if (exact) {
     c("prob_thresh", "cores", "cache", "verbose")
   } else {
-    c("prob_thresh", "k", "clone_block_size", "verbose")
+    c("prob_thresh", "k", "clone_block_size", "verbose", "distance_cache_mb")
   }
   revision_args_allowed <- c(
     "local_k", "local_rescale", "resolutions", "clusters", "cluster_k", "mean_weight",
@@ -351,7 +351,7 @@ clone_disance = function(embedding,cell_clone_prob,outpath,graph_k = 10,
       dis_result <- do.call(graph_clone_ot, c(list(graph = cell_graph, cell_clone_prob = cell_clone_prob), call_args))
     }
     else{
-      nn_args <- c("prob_thresh", "k", "clone_block_size", "verbose")
+      nn_args <- c("prob_thresh", "k", "clone_block_size", "verbose", "distance_cache_mb")
       call_args <- distance_args[names(distance_args) %in% nn_args]
       dis_result <- do.call(graph_clone_nn, c(list(graph = cell_graph, cell_clone_prob = cell_clone_prob), call_args))
     }
@@ -637,9 +637,16 @@ clone_2_ot = function(distance,group1_mass,group2_mass){
 #' @param prob_thresh Threshold for binarizing clone assignment probabilities (default: 0.1).
 #' @param k Integer. Number of nearest neighbors to select for each clone comparison (default: 2).
 #' @param clone_block_size Integer. Number of target clones whose cells are
-#'   included in each graph-distance block. Smaller values reduce peak memory
-#'   at the cost of additional graph-distance calls (default: 25).
+#'   included in each fallback graph-distance block when the source-clone
+#'   distance cache would exceed `distance_cache_mb`. Smaller values reduce
+#'   peak memory at the cost of additional graph-distance calls (default: 25).
 #' @param verbose Logical. Whether to print progress during processing (default: FALSE).
+#' @param distance_cache_mb Non-negative finite number. Maximum size in MiB
+#'   of the numeric source-clone distance cache per worker (default: 64).
+#'   Distances to all remaining target cells are computed once and reused
+#'   when they fit; otherwise target-clone blocks are used. Set to 0 to
+#'   disable this cache. This is not a total RAM limit: the graph, temporary
+#'   matrices, fallback blocks, and other workers require additional memory.
 #'
 #' @return A data frame with columns `group1`, `group2`, and `dis` indicating the NN distance between clones.
 #'
@@ -648,13 +655,18 @@ clone_2_ot = function(distance,group1_mass,group2_mass){
 #'
 #' @export
 graph_clone_nn = function(graph, cell_clone_prob, prob_thresh = 0.1, k = 2,
-                          clone_block_size = 25L, verbose = FALSE){
+                          clone_block_size = 25L, verbose = FALSE,
+                          distance_cache_mb = 64){
   if (!is.numeric(k) || length(k) != 1L || is.na(k) || k < 1L) {
     stop("`k` must be one positive integer.")
   }
   if (!is.numeric(clone_block_size) || length(clone_block_size) != 1L ||
       is.na(clone_block_size) || clone_block_size < 1L) {
     stop("`clone_block_size` must be one positive integer.")
+  }
+  if (!is.numeric(distance_cache_mb) || length(distance_cache_mb) != 1L ||
+      !is.finite(distance_cache_mb) || distance_cache_mb < 0) {
+    stop("`distance_cache_mb` must be one finite non-negative number.")
   }
   k <- as.integer(k)
   clone_block_size <- as.integer(clone_block_size)
@@ -672,26 +684,40 @@ graph_clone_nn = function(graph, cell_clone_prob, prob_thresh = 0.1, k = 2,
   }
 
   if (group_n < 2L) stop("At least two clones are required to calculate clone distances.")
+  # Resolve supports once rather than scanning the cell-by-clone matrix for
+  # every clone pair. Keep only these index vectors in the worker closure.
+  supports <- lapply(seq_len(group_n), function(i) which(cell_group_mat[, i] > 0))
+  rm(cell_group_mat)
+  cache_bytes <- distance_cache_mb * 1024^2
+  pair_distance <- group_2_min
   dis = future_lapply(1:(group_n-1),function(i){
     if(verbose){
       cat("Starting to proceed clone ",i," on PID ", Sys.getpid(),"\n")
     }
 
-    from = which(cell_group_mat[,i] > 0)
-    mass_1 = cell_group_mat[from,i]
-    # cat("The size of mass 1:",length(mass_1),"\n")
+    from <- supports[[i]]
     target_clones <- (i + 1L):group_n
+    all_targets <- sort(unique(unlist(supports[target_clones], use.names = FALSE)))
+    estimated_bytes <- 8 * as.double(length(from)) * length(all_targets)
+    if (cache_bytes > 0 && estimated_bytes <= cache_bytes) {
+      if (verbose) {
+        message("Reusing source-clone distances across ",
+                length(target_clones), " target clones")
+      }
+      source_distances <- igraph::distances(graph, v = from, to = all_targets)
+      dis_out <- vapply(target_clones, function(j) {
+        x <- source_distances[, match(supports[[j]], all_targets), drop = FALSE]
+        pair_distance(x, seq_len(nrow(x)), seq_len(ncol(x)), k = k)
+      }, numeric(1))
+      return(cbind(i, target_clones, dis_out))
+    }
     target_blocks <- split(target_clones, ceiling(seq_along(target_clones) / clone_block_size))
     block_output <- lapply(target_blocks, function(block) {
-      to <- which(Matrix::rowSums(cell_group_mat[, block, drop = FALSE]) > 0)
-      if (length(from) == 0L || length(to) == 0L) {
-        stop("Every clone must retain at least one cell after applying `prob_thresh`.")
-      }
+      to <- sort(unique(unlist(supports[block], use.names = FALSE)))
       block_distances <- igraph::distances(graph, v = from, to = to)
       dis_out <- vapply(block, function(j) {
-        id <- which(cell_group_mat[, j] > 0)
-        x <- block_distances[, to %in% id, drop = FALSE]
-        group_2_min(x, group1 = seq_len(nrow(x)), group2 = seq_len(ncol(x)), k = k)
+        x <- block_distances[, match(supports[[j]], to), drop = FALSE]
+        pair_distance(x, seq_len(nrow(x)), seq_len(ncol(x)), k = k)
       }, numeric(1))
       cbind(i, block, dis_out)
     })
