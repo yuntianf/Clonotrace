@@ -2,6 +2,14 @@
 
 ## Clonotrace 1.2.1
 
+- Accelerated approximate clone distances by resolving clone supports
+  once and reusing source-clone shortest-path distances across target
+  clones.
+  [`graph_clone_nn()`](https://yuntianf.github.io/Clonotrace/reference/graph_clone_nn.md)
+  and `clone_disance(exact = FALSE)` accept `distance_cache_mb` (default
+  64 MiB per worker); larger source matrices fall back to the existing
+  target-clone blocks. Set it to 0 to disable distance caching. The
+  nearest-neighbor statistic is unchanged.
 - Made clone-specific local distance rescaling optional and disabled it
   by default. Set `local_rescale = TRUE` in
   [`revise_clone_distance()`](https://yuntianf.github.io/Clonotrace/reference/revise_clone_distance.md)
