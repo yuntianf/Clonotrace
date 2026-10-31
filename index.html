@@ -63,7 +63,7 @@
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rhdf5"</span>, <span class="st">"bluster"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"yuntianf/Clonotrace"</span>, dependencies <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"yuntianf/Clonotrace"</span>, dependencies <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>To verify the installation in a clean R session:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yuntianf.github.io/Clonotrace/">Clonotrace</a></span><span class="op">)</span></span>
@@ -92,10 +92,53 @@
 <p>The tutorial recommends approximate clone-distance calculation for routine analyses and documents both validated checkpoints and the disk-backed exact-OT workflow for reference calculations. A compiled copy is included at <a href="vignettes/Clonotrace.html"><code>vignettes/Clonotrace.html</code></a>; the GitHub Pages site can be built into <code>docs/</code> with <code><a href="https://pkgdown.r-lib.org/reference/build_site.html" class="external-link">pkgdown::build_site()</a></code>.</p>
 </div>
 <div class="section level2">
+<h2 id="clonoview">ClonoView<a class="anchor" aria-label="anchor" href="#clonoview"></a>
+</h2>
+<p>ClonoView is an interactive viewer for a Clonotrace run, and it comes with the package — installing Clonotrace installs it. Two panels side by side, the clone embedding on the left and the single-cell expression embedding on the right, with the colouring, the profile filter and the timepoint acting on both at once.</p>
+<div class="section level3">
+<h3 id="try-it-first">Try it first<a class="anchor" aria-label="anchor" href="#try-it-first"></a>
+</h3>
+<p>A real run ships with the package, so you can see the viewer working before preparing anything of your own:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yuntianf.github.io/Clonotrace/">Clonotrace</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/clonoview_demo.html">clonoview_demo</a></span><span class="op">(</span><span class="op">)</span>          <span class="co"># bundles the example, serves it, opens a browser</span></span>
+<span><span class="fu"><a href="reference/clonoview_stop.html">clonoview_stop</a></span><span class="op">(</span><span class="op">)</span>          <span class="co"># when you are done</span></span></code></pre></div>
+<p>That takes a few seconds. The example is the NSCLC anti-PD-1 plus JAK1-inhibitor trial of Mathew et al. — 8 patients over 5 treatment cycles, 150,150 cells, 916 clone units, 16 cell types. It is not a stored screenshot or a pre-built result: <code><a href="reference/clonoview_demo.html">clonoview_demo()</a></code> runs the same <code><a href="reference/clonoview_bundle.html">clonoview_bundle()</a></code> you would run on your own data, so if it works, the whole path works. <code><a href="reference/clonoview_example.html">clonoview_example()</a></code> returns the four objects it uses, which is the quickest way to see the shape your own inputs need.</p>
+</div>
+<div class="section level3">
+<h3 id="your-own-run">Your own run<a class="anchor" aria-label="anchor" href="#your-own-run"></a>
+</h3>
+<p>Bundle it once, then view it:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/clonoview_bundle.html">clonoview_bundle</a></span><span class="op">(</span>cell_embedding   <span class="op">=</span> <span class="va">umap</span>,</span>
+<span>                 cell_meta        <span class="op">=</span> <span class="va">cell_meta</span>,</span>
+<span>                 clone_cluster    <span class="op">=</span> <span class="va">clone_cluster</span>,      <span class="co"># from leiden_dis(if_umap = TRUE)</span></span>
+<span>                 cell_profile_prob <span class="op">=</span> <span class="va">cell_profile_prob</span>,</span>
+<span>                 name             <span class="op">=</span> <span class="st">"my_run"</span>,</span>
+<span>                 cell_type_column <span class="op">=</span> <span class="st">"Cell.type.annotation"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/clonoview.html">clonoview</a></span><span class="op">(</span><span class="st">"my_run"</span><span class="op">)</span>     <span class="co"># opens in a browser; clonoview_stop() when done</span></span></code></pre></div>
+<p>Those four arguments are the four things the viewer draws, and nothing else is required. A longitudinal study adds its structure through <code>clone_id_regex</code>, which says how to read the patient, timepoint and receptor out of a clone identifier:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/clonoview_bundle.html">clonoview_bundle</a></span><span class="op">(</span><span class="va">...</span>, clone_id_regex <span class="op">=</span> <span class="st">"^(?P&lt;patient&gt;[^|]+)\\|(?P&lt;visit&gt;[^|]+)\\|(?P&lt;receptor&gt;.+)$"</span>,</span>
+<span>                 patient_column <span class="op">=</span> <span class="st">"patient"</span>, visit_column <span class="op">=</span> <span class="st">"visit"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="the-tables">The tables<a class="anchor" aria-label="anchor" href="#the-tables"></a>
+</h3>
+<p>Beside the two panels there is a clone table and a sample table, one row per clone and per sample, with the cell counts and the sampling schedule. <strong>Click any column heading to sort by it, and again to reverse</strong> — blanks sink to the bottom either way, so an empty cell never displaces real data. <strong>Click a row to show it, shift-click to add more</strong>, and up to eight hand-picked clones each get their own <strong>marker shape</strong> on the clone map, shown beside the row so the table and the plot name the clone the same way. Shape is used rather than colour because colour already means the cell-state profile, in that panel as in every other; a square and a circle of the same colour still agree about the profile and disagree about the clone.</p>
+</div>
+<div class="section level3">
+<h3 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
+</h3>
+<p>The viewer serves on the loopback address only. If R is running on a cluster, forward the port from your own machine with the <code>ssh -L</code> command <code><a href="reference/clonoview.html">clonoview()</a></code> prints, then open the URL there.</p>
+<p>ClonoView needs <code>matplotlib</code> in addition to the packages in <code>requirements.txt</code>, and uses the same Python interpreter as the co-embedding step — so a <code><a href="https://rstudio.github.io/reticulate/reference/use_python.html" class="external-link">reticulate::use_python()</a></code> call covers both. See <code><a href="reference/clonoview_bundle.html">?clonoview_bundle</a></code> for the full set of options.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
 <p>If you use Clonotrace for published work, please cite our manuscript:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>Fu Y, Mathew D, Wang M, et al. Deciphering Cell Fate and Clonal Dynamics via Integrative Single<span class="sc">-</span>Cell Lineage Modeling[J]. bioRxiv, <span class="dv">2025</span><span class="sc">:</span> <span class="dv">2025</span>.<span class="fl">09.</span> <span class="dv">01</span>.<span class="fl">673503.</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>Fu Y, Mathew D, Wang M, et al. Deciphering Cell Fate and Clonal Dynamics via Integrative Single<span class="sc">-</span>Cell Lineage Modeling[J]. bioRxiv, <span class="dv">2025</span><span class="sc">:</span> <span class="dv">2025</span>.<span class="fl">09.</span> <span class="dv">01</span>.<span class="fl">673503.</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

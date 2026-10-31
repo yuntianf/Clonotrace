@@ -90,6 +90,94 @@ copy is included at
 the GitHub Pages site can be built into `docs/` with
 [`pkgdown::build_site()`](https://pkgdown.r-lib.org/reference/build_site.html).
 
+## ClonoView
+
+ClonoView is an interactive viewer for a Clonotrace run, and it comes
+with the package — installing Clonotrace installs it. Two panels side by
+side, the clone embedding on the left and the single-cell expression
+embedding on the right, with the colouring, the profile filter and the
+timepoint acting on both at once.
+
+### Try it first
+
+A real run ships with the package, so you can see the viewer working
+before preparing anything of your own:
+
+``` r
+
+library(Clonotrace)
+clonoview_demo()          # bundles the example, serves it, opens a browser
+clonoview_stop()          # when you are done
+```
+
+That takes a few seconds. The example is the NSCLC anti-PD-1 plus
+JAK1-inhibitor trial of Mathew et al. — 8 patients over 5 treatment
+cycles, 150,150 cells, 916 clone units, 16 cell types. It is not a
+stored screenshot or a pre-built result:
+[`clonoview_demo()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_demo.md)
+runs the same
+[`clonoview_bundle()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_bundle.md)
+you would run on your own data, so if it works, the whole path works.
+[`clonoview_example()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_example.md)
+returns the four objects it uses, which is the quickest way to see the
+shape your own inputs need.
+
+### Your own run
+
+Bundle it once, then view it:
+
+``` r
+
+clonoview_bundle(cell_embedding   = umap,
+                 cell_meta        = cell_meta,
+                 clone_cluster    = clone_cluster,      # from leiden_dis(if_umap = TRUE)
+                 cell_profile_prob = cell_profile_prob,
+                 name             = "my_run",
+                 cell_type_column = "Cell.type.annotation")
+clonoview("my_run")     # opens in a browser; clonoview_stop() when done
+```
+
+Those four arguments are the four things the viewer draws, and nothing
+else is required. A longitudinal study adds its structure through
+`clone_id_regex`, which says how to read the patient, timepoint and
+receptor out of a clone identifier:
+
+``` r
+
+clonoview_bundle(..., clone_id_regex = "^(?P<patient>[^|]+)\\|(?P<visit>[^|]+)\\|(?P<receptor>.+)$",
+                 patient_column = "patient", visit_column = "visit")
+```
+
+### The tables
+
+Beside the two panels there is a clone table and a sample table, one row
+per clone and per sample, with the cell counts and the sampling
+schedule. **Click any column heading to sort by it, and again to
+reverse** — blanks sink to the bottom either way, so an empty cell never
+displaces real data. **Click a row to show it, shift-click to add
+more**, and up to eight hand-picked clones each get their own **marker
+shape** on the clone map, shown beside the row so the table and the plot
+name the clone the same way. Shape is used rather than colour because
+colour already means the cell-state profile, in that panel as in every
+other; a square and a circle of the same colour still agree about the
+profile and disagree about the clone.
+
+### Notes
+
+The viewer serves on the loopback address only. If R is running on a
+cluster, forward the port from your own machine with the `ssh -L`
+command
+[`clonoview()`](https://yuntianf.github.io/Clonotrace/reference/clonoview.md)
+prints, then open the URL there.
+
+ClonoView needs `matplotlib` in addition to the packages in
+`requirements.txt`, and uses the same Python interpreter as the
+co-embedding step — so a
+[`reticulate::use_python()`](https://rstudio.github.io/reticulate/reference/use_python.html)
+call covers both. See
+[`?clonoview_bundle`](https://yuntianf.github.io/Clonotrace/reference/clonoview_bundle.md)
+for the full set of options.
+
 ## Citation
 
 If you use Clonotrace for published work, please cite our manuscript:

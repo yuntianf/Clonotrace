@@ -32,6 +32,24 @@
   : clone_partition
 - [`clone_root()`](https://yuntianf.github.io/Clonotrace/reference/clone_root.md)
   : clone_root
+- [`clonoview()`](https://yuntianf.github.io/Clonotrace/reference/clonoview.md)
+  : clonoview
+- [`clonoview_bundle()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_bundle.md)
+  : clonoview_bundle
+- [`clonoview_cache()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_cache.md)
+  : clonoview_cache
+- [`clonoview_datasets()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_datasets.md)
+  : clonoview_datasets
+- [`clonoview_demo()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_demo.md)
+  : clonoview_demo
+- [`clonoview_example()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_example.md)
+  : clonoview_example
+- [`clonoview_export()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_export.md)
+  : clonoview_export
+- [`clonoview_python()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_python.md)
+  : clonoview_python
+- [`clonoview_stop()`](https://yuntianf.github.io/Clonotrace/reference/clonoview_stop.md)
+  : clonoview_stop
 - [`cluster_merge()`](https://yuntianf.github.io/Clonotrace/reference/cluster_merge.md)
   : cluster_merge
 - [`cluster_profile_enrich()`](https://yuntianf.github.io/Clonotrace/reference/cluster_profile_enrich.md)
