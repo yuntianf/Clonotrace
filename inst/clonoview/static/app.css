@@ -1,0 +1,262 @@
+/* ClonoView. The palette matches the figure scripts in analysis/V_embedding_viz so a
+   profile is the same colour here as in the paper's figures. Light surface only: these
+   are scatter plots read against a paper-white ground, and the validated colour
+   separations were measured on #fcfcfb. */
+
+:root {
+  --surface: #fcfcfb;
+  --panel:   #ffffff;
+  --ink:     #0b0b0b;
+  --ink2:    #52514e;
+  --muted:   #898781;
+  --context: #dcdbd4;
+  --grid:    #e1e0d9;
+  --accent:  #2a78d6;
+  --warn:    #902400;
+  --radius: 7px;
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.05);
+}
+
+* { box-sizing: border-box; }
+
+/* The `hidden` attribute must actually hide things.
+ *
+ * The user-agent stylesheet defines [hidden] { display: none }, but ANY author rule
+ * setting `display` outranks it -- author styles beat UA styles regardless of
+ * selector specificity. `.drawer` declares `display: flex`, so the drawer rendered on
+ * page load despite carrying `hidden`, and since it is position:fixed, inset:0,
+ * z-index:20 over a 97%-opaque background, it covered the entire app: the page came up
+ * blank except for its close button. Worse, the close handler sets `.hidden = true`,
+ * which was a no-op under the same rule, so it could not be dismissed either.
+ *
+ * !important is warranted: it has to beat `.drawer`'s own display declaration, and
+ * every other element that toggles via `hidden` (the tooltips, spinner, toast, and the
+ * legend's clear button) currently works only because no rule happens to set display on
+ * them -- one added later would break them silently and identically. This makes the
+ * attribute authoritative instead of coincidental. tests/test_static.py asserts it. */
+[hidden] { display: none !important; }
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  display: flex; flex-direction: column;
+}
+
+/* ---- header ------------------------------------------------------------- */
+#top {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 14px; border-bottom: 1px solid var(--grid);
+  background: var(--panel); flex: 0 0 auto;
+}
+.brand { font-weight: 650; letter-spacing: .01em; font-size: 14px; }
+.spacer { flex: 1 1 auto; }
+.meta { color: var(--ink2); font-size: 12px; }
+.note { color: var(--muted); font-size: 11.5px; }
+
+select, button {
+  font: inherit; color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--grid); border-radius: var(--radius);
+  padding: 4px 8px; cursor: pointer;
+}
+select:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+button.ghost:hover { background: #f2f1ec; }
+button.small { padding: 2px 6px; font-size: 11.5px; }
+button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ---- panels ------------------------------------------------------------- */
+#panels {
+  flex: 1 1 auto; min-height: 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px;
+}
+.panel {
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
+  background: var(--panel); border: 1px solid var(--grid);
+  border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+}
+.panel-head {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 7px 11px; border-bottom: 1px solid var(--grid);
+}
+.panel-head h2 { margin: 0; font-size: 12.5px; font-weight: 620; }
+.panel-head .sub { color: var(--muted); font-size: 11.5px; }
+.panel-foot {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 7px 11px; border-top: 1px solid var(--grid); background: #fbfaf7;
+}
+.chk { display: inline-flex; align-items: center; gap: 5px; color: var(--ink2); font-size: 12px; }
+.chk input { margin: 0; }
+
+.plot { position: relative; flex: 1 1 auto; min-height: 0; background: var(--surface); }
+.plot canvas, .plot img, .plot svg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
+.plot img { object-fit: contain; image-rendering: auto; }
+.plot svg { pointer-events: none; }
+.plot canvas { cursor: crosshair; }
+
+.tip {
+  position: absolute; z-index: 5; pointer-events: none;
+  background: rgba(11,11,11,.92); color: #fff; padding: 5px 8px;
+  border-radius: 5px; font-size: 11.5px; line-height: 1.35; max-width: 280px;
+  transform: translate(10px, -50%); white-space: pre-line;
+}
+.spinner {
+  position: absolute; top: 9px; right: 9px; width: 14px; height: 14px;
+  border: 2px solid var(--grid); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- legend ------------------------------------------------------------- */
+#legend-wrap {
+  flex: 0 0 auto; border-top: 1px solid var(--grid);
+  background: var(--panel); padding: 7px 14px 9px;
+}
+.legend-head { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+#legend-title { font-size: 12px; font-weight: 600; }
+#legend { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.key {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--grid); border-radius: 20px;
+  padding: 2px 9px 2px 5px; cursor: pointer; background: var(--panel);
+  font-size: 11.5px; color: var(--ink2);
+}
+.key:hover { background: #f2f1ec; }
+.key[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.key.dim { opacity: .38; }
+.key .swatch {
+  width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto;
+  border: 1px solid rgba(0,0,0,.18);
+}
+.key .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---- drawer (patient and clone tables) ---------------------------------- */
+.drawer {
+  position: fixed; inset: 0; z-index: 20;
+  background: rgba(252,252,251,.97);
+  display: flex; flex-direction: column; padding: 14px 18px 18px;
+}
+.drawer-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.drawer-head h3 { margin: 0; font-size: 14px; }
+.drawer-body { flex: 1 1 auto; overflow: auto; }
+
+table { border-collapse: collapse; font-size: 12px; }
+th, td { padding: 4px 9px; text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th {
+  position: sticky; top: 0; background: var(--panel); z-index: 1;
+  border-bottom: 1px solid var(--ink); font-weight: 620;
+}
+tbody tr { border-bottom: 1px solid var(--grid); cursor: pointer; }
+tbody tr:hover { background: #f2f1ec; }
+tbody tr[aria-selected="true"] { background: #e8f0fb; }
+td.num { font-variant-numeric: tabular-nums; }
+th.num { text-align: right; }
+/* Sortable headers. The arrow is part of the header's text rather than a pseudo-element
+   so it is picked up by a screen reader alongside aria-sort, and so the column keeps its
+   width when the direction flips. */
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--ink); text-decoration: underline; }
+th.sortable[aria-sort] { color: var(--ink); }
+td.zero { color: var(--context); }
+.pill {
+  display: inline-block; padding: 0 6px; border-radius: 10px;
+  background: #f0efe9; color: var(--ink2); font-size: 11px;
+}
+
+#toast {
+  position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #fff; padding: 7px 13px; border-radius: 6px;
+  font-size: 12px; z-index: 40; box-shadow: var(--shadow);
+}
+
+@media (max-width: 900px) {
+  #panels { grid-template-columns: 1fr; }
+}
+
+/* ---- captions and time controls ----------------------------------------- */
+.caption {
+  padding: 5px 11px; border-top: 1px solid var(--grid);
+  font-size: 12px; color: var(--ink); background: var(--panel);
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.caption .id { font-weight: 640; }
+.caption .n { color: var(--ink2); font-variant-numeric: tabular-nums; }
+.caption .warn { color: var(--warn); }
+
+/* Shape key for a multi-clone selection. Sits under the caption, in the same band,
+ * because it describes the plot above it. */
+.marker-key {
+  padding: 5px 11px; border-top: 1px solid var(--grid);
+  font-size: 12px; background: var(--panel);
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.marker-key .mk-item { display: inline-flex; align-items: center; gap: 5px; color: var(--ink2); }
+/* The glyphs are deliberately ink-coloured, not profile-coloured: this key is about
+ * shape, and tinting it would imply a clone has one profile. */
+.mk { fill: var(--ink2); vertical-align: -1px; flex: 0 0 auto; }
+
+/* The same glyph beside a selected row in the clone table, so the table and the clone
+ * map name the clone the same way. Keeps its width when empty, so sorting or selecting
+ * does not shift the column. */
+.mk-slot {
+  display: inline-block; width: 13px; margin-right: 3px;
+  text-align: center; vertical-align: -1px;
+}
+
+#timebar {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-top: 1px solid var(--grid); background: var(--panel);
+  flex-wrap: wrap;
+}
+#timebar #tb-what { font-size: 12px; color: var(--ink2); }
+.spacer-sm { width: 10px; }
+#tb-steps { display: flex; gap: 3px; }
+/* One button per visit the clone has cells at. The step itself carries whether that
+   visit had a clone-embedding position: a dashed outline means the lineage was there
+   but under the run's cell threshold, so Clonotrace never placed it on the clone map. */
+.step {
+  min-width: 30px; padding: 2px 7px; font-size: 11.5px;
+  border: 1px solid var(--grid); border-radius: var(--radius);
+  background: var(--panel); cursor: pointer; color: var(--ink2);
+  font-variant-numeric: tabular-nums;
+}
+.step:hover { background: #f2f1ec; }
+.step[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.step.nopos { border-style: dashed; color: var(--muted); }
+.step.nopos[aria-pressed="true"] { background: var(--muted); border-color: var(--muted); }
+
+/* ---- tables in the drawer ------------------------------------------------ */
+.drawer-body table { width: auto; }
+td.cell-count { color: var(--ink2); }
+th.group { border-bottom: 1px solid var(--grid); font-weight: 600; color: var(--ink2); }
+.mini {
+  display: inline-flex; gap: 2px; vertical-align: middle;
+}
+/* One square per visit, in schedule order: filled = a clone unit there, hollow = cells
+   but below the threshold, empty = nothing. Lets the table show a lineage's whole time
+   course without a column per visit. */
+.mini i {
+  width: 9px; height: 9px; border-radius: 2px; display: inline-block;
+  border: 1px solid var(--grid); background: transparent;
+}
+.mini i.on { border-color: transparent; }
+.mini i.sub { border-style: dashed; border-color: var(--muted); }
+.hint { color: var(--muted); font-size: 11.5px; margin: 2px 0 9px; }
+
+/* ---- the tables tab ------------------------------------------------------ */
+body.tables { display: block; height: auto; }
+body.tables #top { position: sticky; top: 0; z-index: 3; }
+#t-main { padding: 10px 16px 24px; }
+.tabs { display: flex; gap: 5px; }
+#t-body { overflow: auto; }
+
+/* MANAscore is an overlay, not a class of the categorical scheme, so its legend entry is
+   set apart rather than sitting in the run of cell types or profiles. */
+.key.mana-key { border-color: var(--warn); color: var(--ink); margin-left: 10px; }

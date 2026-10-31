@@ -1,0 +1,132 @@
+{
+ "11": {
+  "colours": [
+   "#f68ca2",
+   "#b11306",
+   "#b16d04",
+   "#1fd51b",
+   "#0ec7de",
+   "#1787c4",
+   "#0b42b5",
+   "#978ffe",
+   "#ac29fb",
+   "#752f71",
+   "#b45c90"
+  ],
+  "low_contrast": [
+   0,
+   3,
+   4,
+   7
+  ],
+  "meets_cvd_target": true,
+  "meets_normal_floor": true,
+  "worst_cvd": 9.33,
+  "worst_normal": 15.78
+ },
+ "12": {
+  "colours": [
+   "#e02467",
+   "#c87a30",
+   "#7b5800",
+   "#c1b508",
+   "#00d097",
+   "#128168",
+   "#73baea",
+   "#0f4f95",
+   "#2f73ff",
+   "#2a04e5",
+   "#b278ac",
+   "#723863"
+  ],
+  "low_contrast": [
+   3,
+   4,
+   6
+  ],
+  "meets_cvd_target": true,
+  "meets_normal_floor": true,
+  "worst_cvd": 8.15,
+  "worst_normal": 15.23
+ },
+ "16": {
+  "colours": [
+   "#a9496b",
+   "#c57673",
+   "#a75513",
+   "#764002",
+   "#eba002",
+   "#ae8a0d",
+   "#00d097",
+   "#2ca2a2",
+   "#59c2d4",
+   "#0b7a9a",
+   "#2394eb",
+   "#2a33c5",
+   "#5b60c9",
+   "#7e23fe",
+   "#751995",
+   "#75375c"
+  ],
+  "low_contrast": [
+   4,
+   6,
+   8
+  ],
+  "meets_cvd_target": true,
+  "meets_normal_floor": false,
+  "rule": "normal-vision floor unreachable at this count; normal-vision distance maximised subject to clearing the colour-vision target",
+  "worst_cvd": 8.04,
+  "worst_normal": 11.23
+ },
+ "2": {
+  "colours": [
+   "#6dcd09",
+   "#2a04e5"
+  ],
+  "low_contrast": [
+   0
+  ],
+  "meets_cvd_target": true,
+  "meets_normal_floor": true,
+  "worst_cvd": 49.08,
+  "worst_normal": 56.71
+ },
+ "3": {
+  "colours": [
+   "#94180d",
+   "#59c2d4",
+   "#2a04e5"
+  ],
+  "low_contrast": [
+   1
+  ],
+  "meets_cvd_target": true,
+  "meets_normal_floor": true,
+  "rule": "meets the normal-vision floor; colour-vision distance maximised within it",
+  "worst_cvd": 34.1,
+  "worst_normal": 38.57
+ },
+ "9": {
+  "colours": [
+   "#7b5800",
+   "#b3ba23",
+   "#449167",
+   "#15cbc0",
+   "#0062a4",
+   "#4f6cff",
+   "#2a04e5",
+   "#9981c3",
+   "#8b1758"
+  ],
+  "low_contrast": [
+   1,
+   3
+  ],
+  "meets_cvd_target": true,
+  "meets_normal_floor": true,
+  "rule": "meets the normal-vision floor; colour-vision distance maximised within it",
+  "worst_cvd": 12.04,
+  "worst_normal": 15.36
+ }
+}

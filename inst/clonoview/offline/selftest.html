@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClonoView — self check</title>
+<link rel="stylesheet" href="app/app.css">
+<style>
+  body.selftest { padding: 24px 28px; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .lede { color: #55534d; margin: 0 0 20px; line-height: 1.5; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  td, th { text-align: left; padding: 7px 10px; border-bottom: 1px solid #e6e4dd;
+           vertical-align: top; }
+  th { font-weight: 600; color: #55534d; }
+  .v { font-weight: 700; white-space: nowrap; width: 74px; }
+  .pass { color: #1b6b3a; }
+  .fail { color: #a5150c; }
+  .wait { color: #8a877e; }
+  .why { color: #6b6860; font-size: 13px; }
+  #verdict { margin: 20px 0 0; padding: 14px 16px; border-radius: 6px; font-size: 15px;
+             line-height: 1.5; }
+  #verdict.ok { background: #eaf5ee; border: 1px solid #b9dcc6; }
+  #verdict.bad { background: #fdeceb; border: 1px solid #f0c2be; }
+  canvas { border: 1px solid #ddd; margin-top: 10px; image-rendering: pixelated; }
+</style>
+</head>
+<body class="selftest">
+
+<h1>ClonoView self check</h1>
+<p class="lede">
+  This page tests the things that can only be tested in a real browser — that the data
+  files load from a folder with no server, that the cell map can be drawn, and that the
+  viewer and the table tab can talk to each other. The numerical side is checked
+  separately, against the original Python, before the export is built.
+  <strong>If every row below says PASS, the viewer will work on this machine.</strong>
+</p>
+
+<table>
+  <thead><tr><th class="v">Result</th><th>Check</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<div id="verdict" class="wait">Running…</div>
+<canvas id="preview" width="280" height="150"></canvas>
+
+<script src="app/data.js"></script>
+<script src="app/density.js"></script>
+<script src="app/api.js"></script>
+<script src="app/raster.js"></script>
+<script src="data/index.js"></script>
+<script src="app/link.js"></script>
+<script>
+/* Every check states what a failure would mean, because the person running this is
+ * likely to be the collaborator rather than someone who can read the source. A row that
+ * fails should tell them what to do, not what went wrong internally. */
+'use strict';
+const rows = document.getElementById('rows');
+const results = [];
+
+function check(name, why, fn) {
+  const tr = document.createElement('tr');
+  const v = document.createElement('td'); v.className = 'v wait'; v.textContent = '…';
+  const d = document.createElement('td');
+  d.innerHTML = '<div>' + name + '</div><div class="why">' + why + '</div>';
+  tr.appendChild(v); tr.appendChild(d); rows.appendChild(tr);
+  return Promise.resolve().then(fn).then((detail) => {
+    v.className = 'v pass'; v.textContent = 'PASS';
+    if (detail) d.querySelector('.why').textContent = detail;
+    results.push(true);
+  }).catch((e) => {
+    v.className = 'v fail'; v.textContent = 'FAIL';
+    d.querySelector('.why').textContent = String(e && e.message || e);
+    results.push(false);
+  });
+}
+
+function must(cond, msg) { if (!cond) throw new Error(msg); }
+
+async function run() {
+  await check('The catalogue loaded',
+    'If this fails, the "data" folder is missing or is not beside this page.', () => {
+      must(window.CV_INDEX && window.CV_INDEX.datasets, 'data/index.js did not load');
+      must(window.CV_INDEX.datasets.length > 0, 'the catalogue is empty');
+      return window.CV_INDEX.datasets.length + ' datasets listed: ' +
+        window.CV_INDEX.datasets.map((d) => d.name).join(', ');
+    });
+
+  const first = (window.CV_INDEX && window.CV_INDEX.datasets || [])[0];
+  let b = null;
+
+  await check('A dataset loads from a plain folder',
+    'This is the check that a browser will read the data with no server running. ' +
+    'Reading it needs a <script> tag, because fetch is refused from a file:// page.',
+    async () => {
+      must(first, 'no dataset to load');
+      b = await window.CV.loadDataset(first.name);
+      must(b.n_cells > 0, 'the dataset loaded but has no cells');
+      return first.name + ': ' + b.n_cells.toLocaleString() + ' cells, ' +
+        b.n_units.toLocaleString() + ' clone units';
+    });
+
+  await check('The clone map and the clone table can be built',
+    'These are the two things the viewer asks for as soon as a dataset is opened.',
+    async () => {
+      const c = await window.CV.route('/api/clones/' + first.name);
+      const l = await window.CV.route('/api/lineages/' + first.name);
+      must(c.x.length === b.n_units, 'the clone map came back the wrong size');
+      must(l.rows.length > 0, 'the clone table came back empty');
+      return c.x.length.toLocaleString() + ' clone units, ' +
+        l.rows.length.toLocaleString() + ' clones in the table';
+    });
+
+  await check('A clone’s time course, with its density rings',
+    'The rings are computed here rather than downloaded; this is the heaviest arithmetic '
+    + 'the viewer does.', async () => {
+      const l = await window.CV.route('/api/lineages/' + first.name);
+      const big = l.rows[0];
+      const t0 = performance.now();
+      const one = await window.CV.route('/api/lineage/' + first.name + '/' + big.lineage);
+      const ms = Math.round(performance.now() - t0);
+      must(one.frames.length > 0, 'that clone has no frames');
+      const withRings = one.frames.filter((f) => f.density && f.density.levels.length);
+      return one.label + ': ' + one.frames.length + ' timepoint(s), ' +
+        withRings.length + ' with rings, computed in ' + ms + ' ms';
+    });
+
+  await check('The cell map can be drawn',
+    'Drawn into a canvas here instead of being rendered as a picture on a server. ' +
+    'A failure here means this browser is too old.', () => {
+      const t0 = performance.now();
+      const cv = window.CV.background(b, { mode: 'celltype', width: 700 });
+      const ms = Math.round(performance.now() - t0);
+      const g = cv.getContext('2d');
+      const px = g.getImageData(0, 0, cv.width, cv.height).data;
+      // A blank panel is the failure that would otherwise look like a working viewer
+      // with an empty map, so it is checked for rather than assumed.
+      const surf = px.slice(0, 3).join(',');
+      let different = 0;
+      for (let i = 0; i < px.length; i += 4 * 97) {
+        if (px.slice(i, i + 3).join(',') !== surf) different++;
+      }
+      must(different > 20, 'the cell map came out blank');
+      const prev = document.getElementById('preview');
+      prev.getContext('2d').drawImage(cv, 0, 0, prev.width, prev.height);
+      return cv.width + '×' + cv.height + ' drawn in ' + ms + ' ms';
+    });
+
+  await check('The drawn map can be handed to the page',
+    'The viewer shows the map as an image; this is the step that turns the drawing into '
+    + 'one.', () => new Promise((resolve, reject) => {
+      const cv = window.CV.background(b, { mode: 'plain', width: 300 });
+      if (!cv.toBlob) { reject(new Error('this browser has no canvas.toBlob')); return; }
+      cv.toBlob((blob) => {
+        if (!blob || !blob.size) { reject(new Error('produced an empty image')); return; }
+        const u = URL.createObjectURL(blob);
+        const im = new Image();
+        im.onload = () => { URL.revokeObjectURL(u); resolve(Math.round(blob.size / 1024) + ' kB image'); };
+        im.onerror = () => { URL.revokeObjectURL(u); reject(new Error('the image would not load back')); };
+        im.src = u;
+      }, 'image/png');
+    }));
+
+  await check('The two tabs can talk to each other',
+    'The patient and clone tables open in a second tab and drive the viewer. If this '
+    + 'fails, allow pop-ups for this page and run the check again.', () =>
+    new Promise((resolve, reject) => {
+      const w = window.open('selftest_peer.html', 'clonoview-selftest',
+                            'width=380,height=200');
+      if (!w) { reject(new Error('the browser blocked the second tab — allow pop-ups')); return; }
+      window.LINK.attachChild(w);
+      const timer = setTimeout(() => {
+        try { w.close(); } catch (e) { /* already gone */ }
+        reject(new Error('the second tab never answered'));
+      }, 4000);
+      window.LINK.onMessage((m) => {
+        if (m.type !== 'selftest-pong') return;
+        clearTimeout(timer);
+        try { w.close(); } catch (e) { /* already gone */ }
+        resolve('round trip over ' + m.via);
+      });
+      // The peer says hello when it is ready; ping until then.
+      const ping = setInterval(() => window.LINK.send({ type: 'selftest-ping' }), 250);
+      setTimeout(() => clearInterval(ping), 4000);
+    }));
+
+  const bad = results.filter((r) => !r).length;
+  const v = document.getElementById('verdict');
+  v.className = bad ? 'bad' : 'ok';
+  v.textContent = bad
+    ? bad + ' of ' + results.length + ' checks failed. Read the grey line under each ' +
+      'failed row — it says what to do. The most common cause is that ClonoView.html was ' +
+      'moved away from its "app" and "data" folders.'
+    : 'All ' + results.length + ' checks passed. Open ClonoView.html — the viewer will ' +
+      'work on this machine.';
+}
+
+run();
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClonoView — tables</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="tables">
+
+<header id="top">
+  <div class="brand">ClonoView</div>
+  <div class="tabs">
+    <button id="tab-patients" class="ghost" aria-pressed="true">Patients</button>
+    <button id="tab-clones" class="ghost" aria-pressed="false">Clones</button>
+  </div>
+  <div id="t-dataset" class="meta"></div>
+  <div class="spacer"></div>
+  <span id="t-link" class="note"></span>
+  <button id="t-clear" class="ghost small">Show all</button>
+</header>
+
+<main id="t-main">
+  <p class="hint" id="t-hint"></p>
+  <div id="t-body"></div>
+</main>
+
+<div id="toast" hidden></div>
+
+<script src="/static/markers.js"></script>
+<script src="/static/link.js"></script>
+<script src="/static/table.js"></script>
+</body>
+</html>

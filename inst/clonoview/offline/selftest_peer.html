@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ClonoView — self check (second tab)</title>
+<link rel="stylesheet" href="app/app.css">
+<style>body { padding: 20px; font-size: 14px; }</style>
+</head>
+<body>
+<p id="msg">Answering the self check…</p>
+<!-- The other half of the two-tab test. It exists as a real second page rather than an
+     iframe because that is what the tables are: a window opened by the viewer, which
+     under file:// has an opaque origin and can only be reached by postMessage. An iframe
+     would test a case the viewer never uses. -->
+<script src="app/link.js"></script>
+<script>
+'use strict';
+window.LINK.onMessage(function (m) {
+  if (m.type !== 'selftest-ping') return;
+  window.LINK.send({ type: 'selftest-pong', via: window.opener ? 'postMessage' : 'BroadcastChannel' });
+  document.getElementById('msg').textContent = 'Answered. This window can be closed.';
+});
+window.LINK.send({ type: 'selftest-hello' });
+</script>
+</body>
+</html>

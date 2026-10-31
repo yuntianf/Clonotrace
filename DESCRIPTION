@@ -18,13 +18,13 @@ biocViews: SingleCell, Transcriptomics, Clustering, DimensionReduction,
 Imports: Matrix, RANN, RSpectra, abind, dbscan, dplyr, future.apply,
         tidyr, transport, ggplot2, ggrastr, ggrepel, igraph,
         scatterpie, splines, stats, uwot, umap, rhdf5, bluster,
-        magrittr, methods, rlang, utils
-Suggests: knitr, rmarkdown, reticulate, Seurat, future, testthat (>=
-        3.0.0)
+        magrittr, methods, rlang, tools, utils
+Suggests: knitr, rmarkdown, reticulate, Seurat, future, jsonlite,
+        testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Collate: 'globals.R' 'auxiliary.R' 'clone_dis.R' 'exact_ot_disk.R'
         'revised_distance.R'
-        'cluster.R' 'coembed.R' 'label_propagation.R' 'profile_DEG.R'
+        'cluster.R' 'clonoview.R' 'coembed.R' 'label_propagation.R' 'profile_DEG.R'
         'pseudotime.R' 'visualization.R'
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0

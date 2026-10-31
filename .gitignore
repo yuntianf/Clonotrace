@@ -4,3 +4,8 @@ Clonotrace.Rcheck/
 Clonotrace_*.tar.gz
 build/
 
+
+# Python leaves these next to the bundled viewer when it is run from a working copy;
+# they must not be committed and must not be shipped in the built package.
+__pycache__/
+*.pyc

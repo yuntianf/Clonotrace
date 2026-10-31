@@ -12,3 +12,5 @@
 ^Clonotrace[.]BiocCheck$
 ^Clonotrace_[0-9.]+[.]tar[.]gz$
 
+__pycache__
+\.pyc$

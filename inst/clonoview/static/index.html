@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClonoView</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<header id="top">
+  <div class="brand">ClonoView</div>
+  <select id="dataset-pick" title="Open a prepared Clonotrace run"></select>
+  <div id="dataset-line" class="meta"></div>
+  <div class="spacer"></div>
+  <!-- Profile choice is deliberately NOT tied to the cell panel's colour mode, so
+       "profile 7's cells, coloured by cell type" stays reachable. It filters both
+       panels at once. -->
+  <label class="chk">Profile
+    <select id="profile-pick" title="Show one profile across both panels"></select>
+  </label>
+  <!-- One toggle, both panels: MANAscore-high cells go red on the cell map and
+       pTRC clones get a thick red ring on the clone map. Hidden entirely for datasets
+       that have no MANAscore, rather than shown disabled. -->
+  <label class="chk" id="mana-wrap" hidden><input type="checkbox" id="mana-toggle">
+    <span id="mana-label">MANAscore</span></label>
+  <button id="btn-patients" class="ghost" title="Opens in a second tab so you can put it beside the viewer">Patient table ↗</button>
+  <button id="btn-clones" class="ghost" title="Opens in a second tab; clicking a clone there changes this view">Clone table ↗</button>
+</header>
+
+<main id="panels">
+  <!-- LEFT: the clone embedding. Always the left panel, in every view. -->
+  <section class="panel" id="panel-clone">
+    <div class="panel-head">
+      <h2>Clone embedding</h2>
+      <span class="sub" id="clone-sub"></span>
+    </div>
+    <div class="plot" id="clone-plot">
+      <canvas id="clone-canvas"></canvas>
+      <svg id="clone-overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="tip" id="clone-tip" hidden></div>
+    </div>
+    <!-- Clone identity goes UNDER the plot, timepoint goes above it, per the brief. -->
+    <div class="caption" id="clone-caption" hidden></div>
+    <!-- Which shape is which hand-picked clone. Shown only for a multi-clone
+         selection; colour still means profile, so this key is about shape alone. -->
+    <div class="marker-key" id="clone-marker-key" hidden></div>
+    <div class="panel-foot">
+      <label class="chk"><input type="checkbox" id="clone-colour" checked>
+        Colour by profile</label>
+      <label class="chk"><input type="checkbox" id="clone-labels" checked>
+        Profile labels</label>
+      <!-- Layout choice sits beside the panel it changes, not in a dialog, and is
+           hidden entirely for datasets that only have one layout. The clone units,
+           their profiles and every count are identical across layouts; only the
+           coordinates move, so switching is a redraw of the same points and the
+           current selection is deliberately preserved across it. -->
+      <label class="chk" id="clone-layout-wrap" hidden>Layout
+        <select id="clone-layout" title="How the clone embedding is laid out. Same clones and same profiles either way — only the coordinates differ."></select>
+      </label>
+      <span class="note" id="clone-note"></span>
+    </div>
+  </section>
+
+  <!-- RIGHT: the single-cell expression embedding. Always the right panel. -->
+  <section class="panel" id="panel-cell">
+    <div class="panel-head">
+      <h2>Cell embedding</h2>
+      <span class="sub" id="cell-sub"></span>
+    </div>
+    <div class="plot" id="cell-plot">
+      <img id="cell-bg" alt="cell embedding">
+      <!-- Cells of the selected clone or clone set. A canvas, not SVG: a
+           patient-level selection reaches ~15,000 cells per timepoint, which
+           is far more DOM nodes than a redraw-per-frame can carry. -->
+      <canvas id="cell-canvas"></canvas>
+      <svg id="cell-overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="tip" id="cell-tip" hidden></div>
+      <div class="spinner" id="cell-spin" hidden></div>
+    </div>
+    <div class="caption" id="cell-caption" hidden></div>
+    <div class="panel-foot">
+      <label class="chk">Colour by
+        <select id="cell-mode">
+          <option value="celltype">cell type</option>
+          <option value="profile">clone profile</option>
+          <option value="plain">nothing (context only)</option>
+        </select>
+      </label>
+      <label class="chk"><input type="checkbox" id="cell-labels" checked>
+        Labels</label>
+      <span class="note" id="cell-note"></span>
+    </div>
+  </section>
+</main>
+
+<!-- Step controls. Only meaningful once a clone or a set of clones is selected.
+     Two axes where the data has two: step through TIME holding anatomic position
+     fixed, or through ANATOMIC POSITION holding time fixed. The axis picker and the
+     "holding" picker sit together so the sentence reads left to right. Both are hidden
+     for cohorts sampled at a single site, which is four of the five datasets. -->
+<section id="timebar" hidden>
+  <button id="tb-close" class="ghost small" title="Back to all clones">← all clones</button>
+  <span id="tb-what"></span>
+  <span class="spacer-sm"></span>
+  <label class="chk" id="tb-axis-wrap" hidden>Vary
+    <select id="tb-axis" title="Which covariate the steps run along"></select>
+  </label>
+  <label class="chk" id="tb-fixed-wrap" hidden>holding
+    <select id="tb-fixed" title="Held fixed while the other varies"></select>
+  </label>
+  <button id="tb-prev" class="ghost" title="Previous timepoint">◀</button>
+  <div id="tb-steps"></div>
+  <button id="tb-next" class="ghost" title="Next timepoint">▶</button>
+  <button id="tb-play" class="ghost" title="Play through the timepoints">▶ Play</button>
+  <span class="spacer"></span>
+  <label class="chk"><input type="checkbox" id="tb-trail" checked> Trail</label>
+  <label class="chk"><input type="checkbox" id="tb-contour" checked> Contours</label>
+  <button id="tb-prev-clone" class="ghost small" title="Previous clone for this patient">◀ clone</button>
+  <button id="tb-next-clone" class="ghost small" title="Next clone for this patient">clone ▶</button>
+</section>
+
+<!-- The legend doubles as the isolate control: clicking a class shows only it. -->
+<section id="legend-wrap">
+  <div class="legend-head">
+    <span id="legend-title">Legend</span>
+    <button id="legend-clear" class="ghost small" hidden>show all</button>
+    <span class="note" id="legend-quality"></span>
+  </div>
+  <div id="legend"></div>
+</section>
+
+<div id="toast" hidden></div>
+
+<script src="/static/markers.js"></script>
+<script src="/static/link.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
