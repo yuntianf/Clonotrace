@@ -3,7 +3,7 @@ title: "Clonotrace"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Clonotrace}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
   %\VignetteEncoding{UTF-8}
 ---
 

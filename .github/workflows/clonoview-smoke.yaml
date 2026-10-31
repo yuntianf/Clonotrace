@@ -1,0 +1,49 @@
+name: ClonoView smoke test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - R/clonoview.R
+      - inst/clonoview/**
+      - inst/extdata/mathew_nsclc.rds
+      - tests/testthat/test-clonoview.R
+      - DESCRIPTION
+      - .github/workflows/clonoview-smoke.yaml
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  example:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLONOVIEW_RUN_INTEGRATION: "true"
+      OPENBLAS_NUM_THREADS: 1
+      OMP_NUM_THREADS: 1
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: python -m pip install "numpy>=1.24,<3" "scipy>=1.10,<2" "matplotlib>=3.3,<4"
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::testthat, any::jsonlite
+          needs: check
+      - name: Install package and exercise the public viewer API
+        shell: Rscript {0}
+        run: |
+          install.packages(".", repos = NULL, type = "source")
+          library(Clonotrace)
+          testthat::test_file(
+            "tests/testthat/test-clonoview.R",
+            env = new.env(parent = asNamespace("Clonotrace")),
+            stop_on_failure = TRUE
+          )

@@ -3,6 +3,7 @@
 Clonotrace.Rcheck/
 Clonotrace_*.tar.gz
 build/
+github_token*
 
 
 # Python leaves these next to the bundled viewer when it is run from a working copy;

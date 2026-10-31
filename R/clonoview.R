@@ -103,11 +103,16 @@ cv_python_run = function(args, wait = TRUE, stdout = "", stderr = "", py = NULL)
     stop("this Clonotrace installation has no inst/clonoview. Reinstall with ",
          "devtools::install_github(\"yuntianf/Clonotrace\").", call. = FALSE)
   }
-  old = Sys.getenv(c("PYTHONPATH", "CLONOVIEW_DATA"), unset = NA)
+  old = Sys.getenv(c("PYTHONPATH", "CLONOVIEW_DATA", "PYTHONDONTWRITEBYTECODE",
+                     "MPLCONFIGDIR"), unset = NA)
   sep = .Platform$path.sep
   pp = Sys.getenv("PYTHONPATH")
   Sys.setenv(PYTHONPATH = if (nzchar(pp)) paste(home, pp, sep = sep) else home,
-             CLONOVIEW_DATA = clonoview_cache("data"))
+             CLONOVIEW_DATA = clonoview_cache("data"),
+             PYTHONDONTWRITEBYTECODE = "1")
+  if (!nzchar(Sys.getenv("MPLCONFIGDIR"))) {
+    Sys.setenv(MPLCONFIGDIR = clonoview_cache("matplotlib"))
+  }
   on.exit({
     for (k in names(old)) {
       if (is.na(old[[k]])) Sys.unsetenv(k) else do.call(Sys.setenv, as.list(old[k]))
@@ -672,9 +677,13 @@ clonoview = function(dataset = NULL, port = NULL, open = interactive(), python =
   args = c("-m", "clonoview.server", "--port", port,
            "--data", shQuote(clonoview_cache("data")))
   if (!is.null(dataset)) args = c(args, shQuote(dataset))
+  previous_pid = cv_pid()
   cv_python_run(args, wait = FALSE, stdout = log, stderr = log, py = py)
 
   url = paste0("http://localhost:", port, "/")
+  if (!is.null(dataset)) {
+    url = paste0(url, "?dataset=", utils::URLencode(dataset, reserved = TRUE))
+  }
   # The server writes its pidfile only once it has bound, so waiting for the file is
   # waiting for a server that is actually listening rather than one that is about to
   # fail on a busy port.
@@ -682,7 +691,9 @@ clonoview = function(dataset = NULL, port = NULL, open = interactive(), python =
   for (i in 1:50) {
     Sys.sleep(0.1)
     pid = cv_pid()
-    if (!is.null(pid)) break
+    if (!is.null(pid) && !identical(pid, previous_pid) &&
+        pid %in% cv_running_pids()) break
+    pid = NULL
   }
   if (is.null(pid)) {
     stop("the viewer did not start. Its output:\n",
@@ -723,7 +734,17 @@ cv_pid = function() {
 }
 
 cv_running_pids = function() {
-  if (.Platform$OS.type == "windows") return(integer(0))
+  if (.Platform$OS.type == "windows") {
+    output = suppressWarnings(system2(
+      "tasklist.exe", c("/FO", "CSV", "/NH"), stdout = TRUE, stderr = FALSE
+    ))
+    tasks = tryCatch(utils::read.csv(
+      text = output, header = FALSE, colClasses = "character"
+    ), error = function(e) NULL)
+    if (is.null(tasks) || ncol(tasks) < 2L) return(integer(0))
+    pids = suppressWarnings(as.integer(tasks[[2L]]))
+    return(pids[!is.na(pids)])
+  }
   suppressWarnings(as.integer(system2("ps", c("-o", "pid=", "-A"), stdout = TRUE)))
 }
 
